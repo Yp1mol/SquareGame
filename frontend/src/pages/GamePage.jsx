@@ -21,7 +21,7 @@ export default function GamePage() {
             { id: 'protect', title: 'Protect', color: 'bg-blue-600', x: 250, y: 666 },
         ];
     });
-
+    const SIZE = 1600;
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: {
             distance: 5
@@ -41,7 +41,8 @@ export default function GamePage() {
         localStorage.removeItem(`game_${code}`);
         window.location.reload();
     };
-    const DraggingEnd = (event) => {
+
+    const onDragEnd = (event) => {
         const { active, delta, over } = event;
         const field = over.rect;
         const activeSquare = active.rect.current.translated;
@@ -54,7 +55,6 @@ export default function GamePage() {
             return unit;
         });
         const moved = updatedUnits.find(u => u.id === active.id);
-        const size = 1600;
 
         if (activeSquare.top < field.top ||
             activeSquare.left < field.left ||
@@ -62,10 +62,10 @@ export default function GamePage() {
             activeSquare.bottom > field.bottom) {
             return;
         }
-        
+
         updatedUnits.forEach(target => {
-            const r1 = { l: moved.x, r: moved.x + size, t: moved.y, b: moved.y + size };
-            const r2 = { l: target.x, r: target.x + size, t: target.y, b: target.y + size };
+            const r1 = { l: moved.x, r: moved.x + SIZE, t: moved.y, b: moved.y + SIZE };
+            const r2 = { l: target.x, r: target.x + SIZE, t: target.y, b: target.y + SIZE };
             const left = Math.max(r1.l, r2.l);
             const right = Math.min(r1.r, r2.r);
             const top = Math.max(r1.t, r2.t);
@@ -75,12 +75,11 @@ export default function GamePage() {
 
             if (width >= 0 && height >= 0) {
                 const area = width * height;
-                const maxArea = size * size;
+                const maxArea = SIZE * SIZE;
 
                 if (area === maxArea) {
                     return;
                 }
-                console.log(`${area}`);
             }
         });
 
@@ -89,7 +88,7 @@ export default function GamePage() {
     };
 
     return (
-        <DndContext sensors={sensors} onDragEnd={DraggingEnd} collisionDetection={rectIntersection}>
+        <DndContext sensors={sensors} onDragEnd={onDragEnd} collisionDetection={rectIntersection}>
             <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300 relative flex flex-col items-center p-6">
 
                 <div className="w-full flex justify-between items-center z-50 mb-4 max-w-5xl">

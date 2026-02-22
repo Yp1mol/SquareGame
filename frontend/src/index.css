@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@source "../index.html";
+@source "./**/*.{js,jsx,ts,tsx}";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  * {
+    @apply transition-colors duration-300;
+  }
+  body {
+    @apply bg-white text-gray-900 transition-colors duration-300;
+    @apply dark:bg-gray-900 dark:text-white;
+  }
+}
+
+@layer base {
+  html, body, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+body {
+  @apply transition-colors duration-300;
+}

@@ -16,6 +16,7 @@ export class RoomsService {
       ownerId,
       status: 'waiting'
     });
+    
     return await this.roomsRepo.save(room);
   }
 

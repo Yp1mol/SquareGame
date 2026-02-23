@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/authContext";
 import { SquareDrag } from "./SquareDrag";
 import { GameField } from "./GameField";
 
-export default function GamePage() {
+export default function gamePage() {
     const { code } = useParams();
     const { user } = useAuth();
     const [isDark, setIsDark] = useState(true);

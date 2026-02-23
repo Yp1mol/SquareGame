@@ -52,7 +52,7 @@ export default function gamePage() {
 
             return unit;
         });
-        const moved = updatedUnits.find(u => u.id === active.id);
+        const moved = updatedUnits.find(unit => unit.id === active.id);
 
         if (activeSquare.top < field.top ||
             activeSquare.left < field.left ||

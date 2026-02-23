@@ -29,7 +29,6 @@ export default function gamePage() {
     }));
 
     useEffect(() => {
-
         if (isDark) {
             document.documentElement.classList.add('dark');
         } else {
@@ -47,7 +46,6 @@ export default function gamePage() {
         const field = over.rect;
         const activeSquare = active.rect.current.translated;
         const updatedUnits = units.map(unit => {
-
             if (unit.id === active.id) {
                 return { ...unit, x: unit.x + delta.x, y: unit.y + delta.y };
             }

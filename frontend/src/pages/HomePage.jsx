@@ -6,18 +6,17 @@ import { useNavigate } from 'react-router-dom';
 export function HomePage() {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
+  const [isDark, setIsDark] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
+
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [isDark]);
 
   const Logout = () => {
   logout();
@@ -27,7 +26,7 @@ export function HomePage() {
   return (
     <div className="min-h-screen w-full flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
       <nav className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-800">
-        <button onClick={() => setDarkMode(!darkMode)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <button onClick={() => setIsDark(!isDark)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
           {darkMode ? "☀️" : "🌙"}
         </button>
 

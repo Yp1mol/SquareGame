@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceOptions } from './db/data-source';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-
+import React from 'react';
 @Module({
   imports: [
     TypeOrmModule.forRoot(dataSourceOptions),

@@ -1,6 +1,6 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { User } from '../users/user.entity';
-import { Room } from '../rooms/room.entity'; 
+import { Room } from '../rooms/room.entity';
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
@@ -11,7 +11,7 @@ export const dataSourceOptions: DataSourceOptions = {
   database: 'game_square',
   entities: [User, Room],
   migrations: [__dirname + '/migrations/*.ts'],
-  synchronize: true, 
+  synchronize: true,
 };
 
 const dataSource = new DataSource(dataSourceOptions);

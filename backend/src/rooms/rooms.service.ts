@@ -14,13 +14,16 @@ export class RoomsService {
     const room = this.roomsRepo.create({
       code,
       ownerId,
-      status: 'waiting'
+      status: 'waiting',
     });
-    
+
     return await this.roomsRepo.save(room);
   }
 
   async findByCode(code: string) {
-    return await this.roomsRepo.findOne({ where: { code }, relations: ['owner', 'opponent'] });
+    return await this.roomsRepo.findOne({
+      where: { code },
+      relations: ['owner', 'opponent'],
+    });
   }
 }

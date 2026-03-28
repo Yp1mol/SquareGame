@@ -3,16 +3,8 @@ import { Link } from 'react-router-dom';
 import { useMyRooms } from './hooks/useMyRooms';
 
 export default function MyRoomsView() {
-  const { rooms, isLoading, handleJoinRoom } = useMyRooms();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading rooms...</div>
-      </div>
-    );
-  }
-
+  const { rooms, handleJoinRoom } = useMyRooms();
+  
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
       <div className="max-w-4xl mx-auto">

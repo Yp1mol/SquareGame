@@ -24,6 +24,12 @@ export class Users1771345250762 implements MigrationInterface {
             type: 'varchar',
             isNullable: false,
           },
+          {
+            name: 'credits',
+            type: 'int',
+            default: 10,
+            isNullable: false,
+          },
         ],
       }),
       true,

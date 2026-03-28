@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { login as loginService } from "./authService";
 import React from 'react';
 import PropTypes from 'prop-types';
+import { fetchProfile } from "../../services/api";
 
 const AuthContext = createContext(null);
 
@@ -28,9 +29,21 @@ export function AuthProvider({ children }) {
 
     setToken(token);
     setUser(user);
-
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
+  };
+
+  const refreshUser = async () => {
+    const currentToken = token || localStorage.getItem("token");
+    
+    if (!currentToken) {
+      return;
+    }
+    const userData = await fetchProfile(currentToken);
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+
+    return userData;
   };
 
   const logout = () => {
@@ -40,7 +53,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ login, logout, user, token, loading }}>
+    <AuthContext.Provider value={{ login, logout, user, token, loading, setUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,6 +1,23 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { getPositions, savePositions } from "../../../services/api";
+import { useAuth } from "../../auth/authContext";
+
+const FIELDS = {
+    ATTACK: "attack-field",
+    PROTECT: "protect-field"
+};
+
+const UNITS = {
+    ATTACK: "attack",
+    PROTECT: "protect"
+};
+
+const DEFAULT_UNITS = [
+    { id: UNITS.ATTACK, title: "ATTACK", color: "bg-red-600", x: 100, y: 575 },
+    { id: UNITS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: 700, y: 575 },
+];
 
 const getDropPosition = (translatedRect, fieldRect) => {
     let position = null;
@@ -15,43 +32,41 @@ const getDropPosition = (translatedRect, fieldRect) => {
     return position;
 };
 
-const UNIT_IDS = {
-    ATTACK: "attack",
-    PROTECT: "protect"
-};
-
-const FIELD_IDS = {
-    ATTACK: "attack-field",
-    PROTECT: "protect-field"
-};
-
 export function useGame() {
     const { code } = useParams();
     const navigate = useNavigate();
+    const { token } = useAuth();
+
     const [fields] = useState([
-        { id: FIELD_IDS.ATTACK, title: "ATTACK", color: "bg-red-400 dark:bg-red-900", x: 0, y: 0 },
-        { id: FIELD_IDS.PROTECT, title: "PROTECT", color: "bg-blue-400 dark:bg-blue-900", x: 0, y: 0 },
+        { id: FIELDS.ATTACK, title: "ATTACK", color: "bg-red-400 dark:bg-red-900", x: 0, y: 0 },
+        { id: FIELDS.PROTECT, title: "PROTECT", color: "bg-blue-400 dark:bg-blue-900", x: 0, y: 0 },
     ]);
-    const [units, setUnits] = useState(() => {
-        let initialUnits;
-        const saved = localStorage.getItem(`game_${code}`);
+    const [units, setUnits] = useState(DEFAULT_UNITS);
 
-        if (saved) {
-            initialUnits = JSON.parse(saved);
-        } else {
-            initialUnits = [
-                { id: UNIT_IDS.ATTACK, title: "ATTACK", color: "bg-red-600", x: 100, y: 575 },
-                { id: UNIT_IDS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: 700, y: 575 },
-            ];
-        }
+    useEffect(() => {
+        const loadPositions = async () => {
+            if (!token) {
+                return;
+            }
+            const data = await getPositions(code, token);
 
-        return initialUnits;
-    });
+            if (data && data.length > 0) {
+                const loadedUnits = units.map(unit => {
+                    const saved = data.find(p => p.unitId === unit.id);
+                    if (saved) {
+                        return { ...unit, x: saved.x, y: saved.y };
+                    }
+
+                    return unit;
+                });
+                setUnits(loadedUnits);
+            }
+        };
+        loadPositions();
+    }, [code, token]);
 
     const sensors = useSensors(useSensor(PointerSensor, {
-        activationConstraint: {
-            distance: 5
-        }
+        activationConstraint: { distance: 5 }
     }));
 
     const leaveRoom = () => {
@@ -60,60 +75,112 @@ export function useGame() {
         return result;
     };
 
-    const reset = () => {
+    const reset = async () => {
         let result;
-        localStorage.removeItem(`game_${code}`);
-        result = window.location.reload();
+
+        if (!token) {
+            alert('You need to be logged in');
+            result = false;
+            return result;
+        }
+
+        const positionsToSave = DEFAULT_UNITS.map(({ id, x, y }) => ({
+            unitId: id,
+            x: Math.round(x),
+            y: Math.round(y),
+        }));
+
+        await savePositions(code, positionsToSave, token);
+        setUnits(DEFAULT_UNITS);
+        result = true;
+
         return result;
     };
 
-    const handleDragEnd = (event) => {
+    const savePositionsToServer = async () => {
+        let result;
+
+        if (!token) {
+            result = false;
+            return result;
+        }
+
+        const positionsToSave = units.map(({ id, x, y }) => ({
+            unitId: id,
+            x: Math.round(x),
+            y: Math.round(y),
+        }));
+
+        await savePositions(code, positionsToSave, token);
+        result = true;
+
+        return result;
+    };
+
+    const handleDragEnd = async (event) => {
         const { active, over } = event;
+        let result;
 
         if (!over) {
-            return;
+            result = undefined;
+            return result;
         }
+
         const unit = units.find(u => u.id === active.id);
-
         if (!unit) {
-            return;
+            result = undefined;
+            return result;
         }
-        const field = fields.find(f => f.id === over.id);
 
+        const field = fields.find(f => f.id === over.id);
         if (!field) {
-            return;
+            result = undefined;
+            return result;
         }
 
         if (unit.title !== field.title) {
-            return;
+            alert(`${unit.title} can only land on ${field.title} field`);
+            result = undefined;
+            return result;
         }
-        const fieldElement = document.getElementById(over.id);
 
+        const fieldElement = document.getElementById(over.id);
         if (!fieldElement) {
-            return;
+            result = undefined;
+            return result;
         }
+
         const fieldRect = fieldElement.getBoundingClientRect();
         const translatedRect = active.rect.current.translated || active.rect.current.initial;
 
         if (!translatedRect) {
-            return;
+            result = undefined;
+            return result;
         }
+
         const position = getDropPosition(translatedRect, fieldRect);
-        console.log('Position relative to field:', position);
 
         if (!position) {
-            return;
+            result = undefined;
+            return result;
         }
-        const updatedUnits = units.map((unit) => {
-            if (unit.id === active.id) {
-                return { ...unit, x: position.x, y: position.y };
-            }
 
-            return unit;
+        const updatedUnits = units.map((u) => {
+            let updatedUnit;
+
+            if (u.id === active.id) {
+                updatedUnit = { ...u, x: position.x, y: position.y };
+            } else {
+                updatedUnit = u;
+            }
+            
+            return updatedUnit;
         });
 
         setUnits(updatedUnits);
-        localStorage.setItem(`game_${code}`, JSON.stringify(updatedUnits));
+        result = updatedUnits;
+
+        return result;
     };
 
     return {
@@ -121,6 +188,7 @@ export function useGame() {
         units,
         fields,
         reset,
+        savePositions: savePositionsToServer,
         leaveRoom,
         handleDragEnd,
         sensors,

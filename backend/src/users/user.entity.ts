@@ -12,6 +12,9 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ default: 10 })
+  credits: number;
+
   @OneToMany(() => Room, (room) => room.owner)
   ownedRooms: Room[];
 

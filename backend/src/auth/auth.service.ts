@@ -8,7 +8,8 @@ export class AuthService {
   constructor(
     private users: UsersService,
     private jwt: JwtService,
-  ) { }
+  ) {}
+
   async login(username: string, password: string) {
     const user = await this.users.findByUsername(username);
 
@@ -20,12 +21,16 @@ export class AuthService {
     if (!ok) {
       throw new BadRequestException('Wrong password');
     }
-
     return {
       access_token: await this.jwt.signAsync({
         sub: user.id,
         username: user.username,
       }),
+      user: {
+        id: user.id,
+        username: user.username,
+        credits: user.credits,
+      },
     };
   }
 

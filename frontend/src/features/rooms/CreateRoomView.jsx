@@ -2,13 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useCreateRoom } from "./hooks/useCreateRoom";
 
-export function CreateRoomView() {
+export default function CreateRoomView() {
   const { roomCode, setRoomCode, handleCreate } = useCreateRoom();
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-white dark:bg-gray-900 transition-colors p-4">
       <div className="w-full max-w-sm">
-
         <Link
           to="/home"
           className="text-xs font-bold text-gray-400 hover:text-blue-500 transition-colors mb-6 block w-fit"

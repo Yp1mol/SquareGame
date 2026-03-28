@@ -22,7 +22,7 @@ export async function registerUser(data) {
   });
 
   if (!res.ok) {
-    throw new Error("Register failed");
+   throw new Error("Register failed");
   }
 
   return res.json();
@@ -41,12 +41,12 @@ export async function updateUsername(token, username) {
   if (!res.ok) {
     throw new Error("Fail to update username");
   }
-  
+
   return res.json();
 }
 
 export async function fetchProfile(token) {
-  const res = await fetch("http://localhost:3001/users/me", {
+  const res = await fetch(`${API_URL}/users/me`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -54,6 +54,113 @@ export async function fetchProfile(token) {
 
   if (!res.ok) {
     throw new Error("Not authorized");
+  }
+
+  return res.json();
+}
+
+export async function getPositions(roomCode, token) {
+  const res = await fetch(`${API_URL}/rooms/${roomCode}/positions`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to get positions");
+  }
+
+  return res.json();
+}
+
+export async function savePositions(roomCode, positions, token) {
+  const res = await fetch(`${API_URL}/rooms/${roomCode}/positions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ positions }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to save positions");
+  }
+
+  return res.json();
+}
+
+export async function createRoom(roomCode, token) {
+  const res = await fetch(`${API_URL}/rooms`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ code: roomCode }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to create room");
+  }
+
+  return res.json();
+}
+
+export async function fetchRooms(token) {
+  const res = await fetch(`${API_URL}/rooms`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch rooms");
+  }
+
+  return res.json();
+}
+
+export async function joinRoom(roomCode, token) {
+  const res = await fetch(`${API_URL}/rooms/${roomCode}/join`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to join room");
+  }
+
+  return res.json();
+}
+
+export async function addCredit(token) {
+  const res = await fetch(`${API_URL}/users/credits/add`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to add credit");
+  }
+
+  const data = await res.json();
+  return data; 
+}
+
+export async function fetchMyRooms(token) {
+  const res = await fetch(`${API_URL}/rooms/mine`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch rooms");
   }
 
   return res.json();

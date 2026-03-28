@@ -10,7 +10,8 @@ import HomePage from '../pages/HomePage';
 import ProfilePage from '../pages/ProfilePage';
 import CreateRoomPage from '../pages/CreateRoomPage';
 import GamePage from '../pages/GamePage';
-
+import RoomsPage from '../pages/JoinRoomPage';
+import MyRoomsPage from '../pages/MyRoomsPage';
 
 function App() {
   return (
@@ -19,6 +20,8 @@ function App() {
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/myrooms" element={<MyRoomsPage />} />
+            <Route path="/rooms" element={<RoomsPage />} />
             <Route path="/game/:code" element={<GamePage />} />
             <Route path="/createroom" element={<CreateRoomPage />} />
             <Route path="/home" element={<HomePage />} />

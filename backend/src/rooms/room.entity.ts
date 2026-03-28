@@ -4,8 +4,10 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { User } from '../users/user.entity';
+import { Position } from '../positions/position.entity';
 
 @Entity('rooms')
 export class Room {
@@ -37,4 +39,7 @@ export class Room {
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'guestId' })
   guest: User;
+
+  @OneToMany(() => Position, (position) => position.room, { cascade: true })
+  positions: Position[];
 }

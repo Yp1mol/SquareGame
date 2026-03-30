@@ -13,15 +13,15 @@ export function useCreateRoom() {
     setRoomCode(code);
   }, []);
 
-  const handleCreate = async () => {
+  const handleCreate = async (cost) => {
     if (!token) {
       return;
     }
 
-    if (user.credits < 1) {
+    if (!user || user.credits < cost) {
       return;
     }
-    const data = await createRoom(roomCode, token);
+    const data = await createRoom(roomCode, token, cost);
 
     if (data.user) {
       setUser({ ...user, credits: data.user.credits });

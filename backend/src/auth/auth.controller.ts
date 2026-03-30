@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
@@ -8,7 +10,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  login(@Body() body : any) {
+  login(@Body() body: any) {
     return this.auth.login(body.username, body.password);
   }
 

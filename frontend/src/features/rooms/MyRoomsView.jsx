@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useMyRooms } from './hooks/useMyRooms';
 
 export default function MyRoomsView() {
-  const { rooms, isLoading, handleJoinRoom } = useMyRooms();
+  const { rooms, isLoading, handleJoinRoom, handleDeleteRoom } = useMyRooms();
 
   if (isLoading) {
     return (
@@ -43,7 +43,10 @@ export default function MyRoomsView() {
                     {room.code}
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Host: {room.owner?.username || 'Unknown'}
+                    Host: {room.owner.username || 'Unknown'}
+                  </div>
+                  <div className="text-sm font-bold text-yellow-500">
+                    Cost: {room.cost}
                   </div>
                 </div>
                 <button
@@ -51,6 +54,12 @@ export default function MyRoomsView() {
                   className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                 >
                   Join Room
+                </button>
+                <button
+                  onClick={() => handleDeleteRoom(room.code)}
+                  className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                >
+                  Delete Room
                 </button>
               </div>
             ))}

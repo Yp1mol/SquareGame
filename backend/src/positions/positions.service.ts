@@ -60,4 +60,13 @@ export class PositionsService {
 
     return this.positionRepository.save(newPositions);
   }
+  async deleteByRoomId(roomId: number) {
+    const positions = await this.positionRepository.find({ where: { roomId } });
+
+    if (positions.length === 0) {
+      return;
+    }
+
+    return this.positionRepository.delete({ roomId });
+  }
 }

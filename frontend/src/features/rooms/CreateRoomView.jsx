@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useCreateRoom } from "./hooks/useCreateRoom";
 
 export default function CreateRoomView() {
   const { roomCode, setRoomCode, handleCreate } = useCreateRoom();
+  const [cost, setCost] = useState(1);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-white dark:bg-gray-900 transition-colors p-4">
@@ -21,9 +22,28 @@ export default function CreateRoomView() {
             Private Match
           </p>
 
+          <div className="mb-6">
+            <label className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2 block">
+              Room Cost: {cost} credit{ cost !== 1 ? 's' : '' }
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={cost}
+              onChange={(e) => setCost(parseInt(e.target.value))}
+              className="w-full accent-green-500"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>1</span>
+              <span>5</span>
+              <span>10</span>
+            </div>
+          </div>
+
           <button
-            onClick={handleCreate}
-            className="w-full bg-green-500 hover:bg-green-600 text-white py-5 rounded-2xl font-black text-lg shadow-lg transition-all active:scale-95 mb-10"
+            onClick={() => handleCreate(cost)}
+            className="w-full py-5 rounded-2xl font-black text-lg shadow-lg transition-all active:scale-95 mb-6 bg-green-500 hover:bg-green-600 text-white"
           >
             CREATE ROOM
           </button>

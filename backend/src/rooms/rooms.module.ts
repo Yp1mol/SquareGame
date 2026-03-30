@@ -11,6 +11,6 @@ import { UsersModule } from '../users/users.module';
   imports: [TypeOrmModule.forFeature([Room, Position]), UsersModule],
   providers: [RoomsService, PositionsService],
   controllers: [RoomsController],
-  exports: [RoomsService, PositionsService],
+  exports: [RoomsService],
 })
 export class RoomsModule {}

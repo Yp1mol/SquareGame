@@ -53,6 +53,7 @@ export function useGame() {
             if (data && data.length > 0) {
                 const loadedUnits = units.map(unit => {
                     const saved = data.find(p => p.unitId === unit.id);
+
                     if (saved) {
                         return { ...unit, x: saved.x, y: saved.y };
                     }
@@ -72,6 +73,7 @@ export function useGame() {
     const leaveRoom = () => {
         let result;
         result = navigate("/home");
+
         return result;
     };
 
@@ -81,6 +83,7 @@ export function useGame() {
         if (!token) {
             alert('You need to be logged in');
             result = false;
+
             return result;
         }
 
@@ -102,6 +105,7 @@ export function useGame() {
 
         if (!token) {
             result = false;
+
             return result;
         }
 
@@ -129,24 +133,28 @@ export function useGame() {
         const unit = units.find(u => u.id === active.id);
         if (!unit) {
             result = undefined;
+
             return result;
         }
 
         const field = fields.find(f => f.id === over.id);
         if (!field) {
             result = undefined;
+
             return result;
         }
 
         if (unit.title !== field.title) {
             alert(`${unit.title} can only land on ${field.title} field`);
             result = undefined;
+
             return result;
         }
 
         const fieldElement = document.getElementById(over.id);
         if (!fieldElement) {
             result = undefined;
+
             return result;
         }
 
@@ -155,6 +163,7 @@ export function useGame() {
 
         if (!translatedRect) {
             result = undefined;
+
             return result;
         }
 
@@ -162,6 +171,7 @@ export function useGame() {
 
         if (!position) {
             result = undefined;
+            
             return result;
         }
 

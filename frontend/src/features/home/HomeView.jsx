@@ -5,10 +5,6 @@ import { useHome } from "./hooks/useHome";
 export function HomePage() {
     const {
         user,
-        isMenuOpen,
-        setIsMenuOpen,
-        handleLogout,
-        handleAddCredit,
     } = useHome();
 
     return (
@@ -18,42 +14,22 @@ export function HomePage() {
                     <span>
                         Good day, <span className="text-green-500 font-bold">{user?.username}</span>
                     </span>
-                    
+
                 </div>
 
                 <div className="relative">
-                    <button
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    <Link
+                        to="/profile"
                         className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl"
                     >
-                        <span className="hidden sm:inline">{user?.username}</span>
-                    </button>
-                    
-
-                    {isMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl py-2 z-50">
-                            <Link
-                                to="/profile"
-                                className="block text-center px-4 py-2 text-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                                Edit Profile
-                            </Link>
-                            <button
-                                onClick={handleLogout}
-                                className="w-full text-center px-4 py-2 text-red-500 hover:bg-gray-50 dark:hover:bg-gray-700"
-                            >
-                                Logout
-                            </button>
-                        </div>
-                        
-                    )}
-                    <span className="font-bold">Balance: {user?.credits || 0} credits </span>
+                        {user?.username}
+                    </Link>
                     <button
-                        onClick={handleAddCredit}
-                        className="bg-green-500 hover:bg-green-600 text-white text-xs px-2 py-1 rounded-full transition mt-5"
+
                     >
-                        +1
+                        
                     </button>
+                    <span className="font-bold">Balance: {user?.credits || 0} credits </span>
                 </div>
             </nav>
 

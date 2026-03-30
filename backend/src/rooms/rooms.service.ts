@@ -11,26 +11,22 @@ export class RoomsService {
     private usersService: UsersService,
   ) {}
 
-  async create(code: string, ownerId: number) {
+  async create(code: string, ownerId: number, cost: number) {
     const user = await this.usersService.findOne(ownerId);
-    const amount = 1;
 
     if (!user) {
       throw new BadRequestException('User not found');
     }
 
-    if (user.credits < amount) {
-      throw new BadRequestException(
-        'Not enough credits to create a room (need 1 credit)',
-      );
+    if (user.credits < cost) {
+      throw new BadRequestException(`need ${cost} credit`);
     }
-
-    await this.usersService.withdrawCredits(ownerId, 1);
-
+    await this.usersService.withdrawCredits(ownerId, cost);
     const room = this.roomsRepo.create({
       code,
       ownerId,
       status: 'waiting',
+      cost,
     });
 
     return await this.roomsRepo.save(room);
@@ -47,6 +43,7 @@ export class RoomsService {
         id: true,
         code: true,
         status: true,
+        cost: true,
         owner: {
           id: true,
           username: true,
@@ -72,6 +69,17 @@ export class RoomsService {
     if (room.status !== 'waiting') {
       throw new Error('Room already started');
     }
+    const user = await this.usersService.findOne(userId);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.credits < room.cost) {
+      throw new Error(`need ${room.cost} credits`);
+    }
+
+    await this.usersService.withdrawCredits(userId, room.cost);
     room.guestId = userId;
     room.status = 'playing';
 
@@ -95,11 +103,32 @@ export class RoomsService {
         id: true,
         code: true,
         status: true,
+        cost: true,
         owner: {
           id: true,
           username: true,
         },
       },
     });
+  }
+
+  async remove(code: string, userId: number) {
+    const room = await this.roomsRepo.findOne({
+      where: { code },
+    });
+
+    if (!room) {
+      throw new BadRequestException('Room not found');
+    }
+
+    if (room.ownerId !== userId) {
+      throw new BadRequestException('You are not the owner of this room');
+    }
+
+    if (room.status === 'waiting') {
+      await this.usersService.addCredits(userId, room.cost);
+    }
+
+    return await this.roomsRepo.remove(room);
   }
 }

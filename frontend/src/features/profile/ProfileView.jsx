@@ -1,56 +1,100 @@
 import React from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useProfile } from "./hooks/useProfile";
 
 export function ProfileView() {
     const {
-        token,
-        loading,
         username,
+        credits,
         setUsername,
-        isProcessing,
-        submit,
+        handleUpdateUsername,
+        handleAddCredit,
+        handleLogout,
     } = useProfile();
-
-    if (loading) return <div className="dark:text-white">Loading...</div>;
-
-    if (!token) return <Navigate to="/login" replace />;
 
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-white dark:bg-gray-900 transition-colors p-4">
-            <div className="w-full max-w-md bg-gray-50 dark:bg-gray-800 p-10 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-700 relative">
-
+            <div className="w-full max-w-4xl bg-gray-50 dark:bg-gray-800 p-8 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-700">
                 <Link
                     to="/home"
-                    className="absolute top-8 left-8 text-[10px] font-black text-blue-500 uppercase tracking-widest hover:opacity-70"
+                    className="inline-flex items-center gap-2 text-[10px] font-black text-blue-500 uppercase tracking-widest hover:opacity-70 mb-8"
                 >
-                    Back
+                    ← BACK
                 </Link>
 
-                <h1 className="text-3xl font-black mb-10 text-center dark:text-white tracking-tighter">
-                    PROFILE
-                </h1>
-
-                <form onSubmit={submit} className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">
-                            Username
-                        </label>
+                <div className="flex flex-col md:flex-row gap-8">
+                    <div className="flex-1 flex flex-col items-center text-center">
+                        <div className={`w-40 h-40 rounded-full bg-green-500 flex items-center justify-center shadow-2xl mb-6`}>
+                            <span className="text-6xl font-black text-white uppercase">
+                                {username?.charAt(0)}
+                            </span>
+                        </div>
 
                         <input
-                            className="w-full border-2 border-gray-200 dark:border-gray-700 p-4 rounded-2xl bg-white dark:bg-gray-900 dark:text-white outline-none focus:border-blue-500 transition-all font-bold"
+                            type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
+                            className="text-2xl font-bold dark:text-white bg-transparent border-b-2 border-gray-300 dark:border-gray-600 text-center outline-none focus:border-blue-500 mb-2"
                         />
+
+                        <button
+                            onClick={handleUpdateUsername}
+                            className="text-sm text-blue-500 hover:text-blue-600 font-medium"
+                        >
+                            Save username →
+                        </button>
+
+                        <div className="mt-8 text-center">
+                            <div className="text-4xl font-black text-yellow-500">{credits}</div>
+                            <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">Credits</div>
+                        </div>
                     </div>
 
+                    <div className="flex-1">
+                        <h3 className="text-lg font-bold dark:text-white mb-4 text-center md:text-left">
+                            Add Credits
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                           <button
+                                onClick={() => handleAddCredit(1)}
+                                className="bg-gradient-to-br from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white p-6 rounded-2xl shadow-lg transition transform hover:scale-105"
+                            >
+                                <div className="text-2xl font-black">+1</div>
+                                <div className="text-sm opacity-80 mt-1">0.99$</div>
+                            </button>
+                            <button
+                                onClick={() => handleAddCredit(5)}
+                                className="bg-gradient-to-br from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white p-6 rounded-2xl shadow-lg transition transform hover:scale-105"
+                            >
+                                <div className="text-2xl font-black">+5</div>
+                                <div className="text-sm opacity-80 mt-1">4.99$</div>
+                            </button>
+                            <button
+                                onClick={() => handleAddCredit(10)}
+                                className="bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700 text-white p-6 rounded-2xl shadow-lg transition transform hover:scale-105"
+                            >
+                                <div className="text-2xl font-black">+10</div>
+                                <div className="text-sm opacity-80 mt-1">9.99$</div>
+                            </button>
+                            <button
+                                onClick={() => handleAddCredit(20)}
+                                className="bg-gradient-to-br from-red-400 to-red-600 hover:from-red-500 hover:to-red-700 text-white p-6 rounded-2xl shadow-lg transition transform hover:scale-105"
+                            >
+                                <div className="text-2xl font-black">+20</div>
+                                <div className="text-sm opacity-80 mt-1">19.99$</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex justify-center mt-12">
                     <button
-                        disabled={isProcessing}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-500/20 transform active:scale-95 transition-all"
+                        onClick={handleLogout}
+                        className="bg-gray-200 dark:bg-red-700 hover:bg-red-300 dark:hover:bg-red-600 text-gray-700 dark:text-gray-200 px-8 py-3 rounded-full font-bold transition"
                     >
-                        {isProcessing ? "SAVING..." : "SAVE CHANGES"}
+                        Logout
                     </button>
-                </form>
+                </div>
             </div>
         </div>
     );

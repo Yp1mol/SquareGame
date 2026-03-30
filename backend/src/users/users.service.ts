@@ -34,7 +34,9 @@ export class UsersService {
       throw new Error('User not found');
     }
     user.username = username;
+
     await this.usersRepo.save(user);
+
     return { id: user.id, username: user.username, credits: user.credits };
   }
 
@@ -71,6 +73,7 @@ export class UsersService {
       throw new Error('Not enough credits');
     }
     user.credits -= amount;
+
     await this.usersRepo.save(user);
 
     return { credits: user.credits };

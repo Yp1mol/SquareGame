@@ -90,14 +90,14 @@ export async function savePositions(roomCode, positions, token) {
   return res.json();
 }
 
-export async function createRoom(roomCode, token) {
+export async function createRoom(roomCode, token, cost) {
   const res = await fetch(`${API_URL}/rooms`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ code: roomCode }),
+    body: JSON.stringify({ code: roomCode, cost }),
   });
 
   if (!res.ok) {
@@ -161,6 +161,21 @@ export async function fetchMyRooms(token) {
 
   if (!res.ok) {
     throw new Error("Failed to fetch rooms");
+  }
+
+  return res.json();
+}
+
+export async function deleteRoom(roomCode, token) {
+  const res = await fetch(`${API_URL}/rooms/${roomCode}`, { 
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to delete room");
   }
 
   return res.json();

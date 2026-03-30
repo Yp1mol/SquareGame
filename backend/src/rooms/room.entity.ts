@@ -36,6 +36,9 @@ export class Room {
   @Column({ nullable: true })
   guestId: number;
 
+  @Column({ default: 1 })
+  cost: number;
+
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'guestId' })
   guest: User;

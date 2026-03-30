@@ -37,9 +37,12 @@ export default function JoinRoomView() {
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     Host: {room.owner?.username || 'Unknown'}
                   </div>
+                  <div className="text-sm font-bold text-yellow-500">
+                    Cost: {room.cost} credit{room.cost !== 1 ? 's' : ''}
+                  </div>
                 </div>
                 <button
-                  onClick={() => handleJoinRoom(room.code)}
+                  onClick={() => handleJoinRoom(room.code, room.cost)}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
                 >
                   Join

@@ -9,6 +9,7 @@ import {
   Param,
   UseGuards,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { PositionsService } from '../positions/positions.service';
 import { RoomsService } from './rooms.service';
@@ -23,10 +24,13 @@ export class RoomsController {
 
   @Post()
   @UseGuards(AuthGuard)
-  async createRoom(@Body() body: { code: string }, @Req() req: any) {
+  async createRoom(
+    @Body() body: { code: string; cost: number },
+    @Req() req: any,
+  ) {
     const userId = req.user?.sub || req.user?.id;
-
-    return this.roomsService.create(body.code, userId);
+    const cost = body.cost || 1;
+    return this.roomsService.create(body.code, userId, cost);
   }
 
   @Get(':code/positions')
@@ -64,6 +68,7 @@ export class RoomsController {
 
     return this.roomsService.joinRoom(code, userId);
   }
+
   @Get()
   @UseGuards(AuthGuard)
   async getRoomsToJoin(@Req() req: any) {
@@ -71,5 +76,13 @@ export class RoomsController {
     const rooms = await this.roomsService.findToJoin(userId);
 
     return rooms;
+  }
+
+  @Delete(':code')
+  @UseGuards(AuthGuard)
+  async deleteRoom(@Param('code') code: string, @Req() req: any) {
+    const userId = req.user?.sub || req.user?.id;
+
+    return this.roomsService.remove(code, userId);
   }
 }

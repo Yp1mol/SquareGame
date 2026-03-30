@@ -9,6 +9,7 @@ export function useRegister() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     await register({ username, password });
     navigate("/login");
   };

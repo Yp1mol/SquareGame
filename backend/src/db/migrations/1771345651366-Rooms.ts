@@ -50,9 +50,10 @@ export class CreateRoomsTable1771345260000 implements MigrationInterface {
             default: 0,
           },
           {
-            name: 'createdAt',
-            type: 'timestamp',
-            default: 'now()',
+            name: 'cost',
+            type: 'int',
+            default: 1,
+            isNullable: false,
           },
         ],
       }),

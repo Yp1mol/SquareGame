@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 export function useJoinRoom() {
     const [rooms, setRooms] = useState([]);
-    const { token } = useAuth();
+    const { token, user, setUser } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -19,9 +19,21 @@ export function useJoinRoom() {
         loadRooms();
     }, [token]);
 
-    const handleJoinRoom = async (roomCode) => {
-        await joinRoom(roomCode, token);
+    const handleJoinRoom = async (roomCode, roomCost) => {
+        if (!token) {
+            return;
+        }
+
+        if (user.credits < roomCost) {
+            return;
+        }
+        const data = await joinRoom(roomCode, token);
+        
+        if (data.user) {
+            setUser({ ...user, credits: data.user.credits });
+        }
         navigate(`/game/${roomCode}`);
+
     };
 
     return { rooms, handleJoinRoom };

@@ -15,8 +15,8 @@ const UNITS = {
 };
 
 const DEFAULT_UNITS = [
-    { id: UNITS.ATTACK, title: "ATTACK", color: "bg-red-600", x: 100, y: 575 },
-    { id: UNITS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: 700, y: 575 },
+    { id: UNITS.ATTACK, title: "ATTACK", color: "bg-red-600", x: 100, y: 590 },
+    { id: UNITS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: 100, y: 590 },
 ];
 
 const getDropPosition = (translatedRect, fieldRect) => {

@@ -9,6 +9,7 @@ export default function LoginForm() {
         setUsername,
         setPassword,
         handleSubmit,
+        error,
     } = useLogin();
 
     return (
@@ -16,6 +17,14 @@ export default function LoginForm() {
             <div className="w-full max-w-md bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 relative">
 
                 <h1 className="text-3xl font-black mb-6 text-gray-900 dark:text-white text-center">Login</h1>
+
+                {error && (
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">
+                        <p className="text-red-600 dark:text-red-400 text-sm font-medium text-center">
+                            {error}
+                        </p>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <input

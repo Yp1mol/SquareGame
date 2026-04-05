@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useCreateRoom } from "./hooks/useCreateRoom";
 
 export default function CreateRoomView() {
-  const { roomCode, setRoomCode, handleCreate } = useCreateRoom();
+  const { roomCode, setRoomCode, handleCreate, error } = useCreateRoom();
   const [cost, setCost] = useState(1);
 
   return (
@@ -18,9 +18,17 @@ export default function CreateRoomView() {
 
         <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 text-center">
           <h1 className="text-2xl font-black mb-1 dark:text-white">1 VS 1</h1>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-10">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">
             Private Match
           </p>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl">
+              <p className="text-red-600 dark:text-red-400 text-sm font-medium">
+                {error}
+              </p>
+            </div>
+          )}
 
           <div className="mb-6">
             <label className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2 block">
@@ -43,7 +51,7 @@ export default function CreateRoomView() {
 
           <button
             onClick={() => handleCreate(cost)}
-            className="w-full py-5 rounded-2xl font-black text-lg shadow-lg transition-all active:scale-95 mb-6 bg-green-500 hover:bg-green-600 text-white"
+            className="w-full py-5 rounded-2xl font-black text-lg shadow-lg transition-all active:scale-95 mb-6 bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             CREATE ROOM
           </button>
@@ -59,7 +67,7 @@ export default function CreateRoomView() {
             />
           </div>
 
-          <p className="mt-10 text-[11px] font-bold text-blue-500/80 uppercase tracking-tight">
+          <p className="mt-6 text-[11px] font-bold text-blue-500/80 uppercase tracking-tight">
             After creating, you&apos;ll need to wait for one more player to join
           </p>
         </div>

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { Room } from './room.entity';
@@ -15,12 +15,13 @@ export class RoomsService {
     const user = await this.usersService.findOne(ownerId);
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new Error('User not found');
     }
 
     if (user.credits < cost) {
-      throw new BadRequestException(`need ${cost} credit`);
+      throw new Error(`need ${cost} credit`);
     }
+
     await this.usersService.withdrawCredits(ownerId, cost);
     const room = this.roomsRepo.create({
       code,
@@ -95,10 +96,8 @@ export class RoomsService {
 
   async findMine(userId: number) {
     return await this.roomsRepo.find({
-      where: {
-        ownerId: userId,
-      },
-      relations: ['owner'],
+      where: [{ ownerId: userId }, { guestId: userId }],
+      relations: ['owner', 'guest'],
       select: {
         id: true,
         code: true,
@@ -118,11 +117,11 @@ export class RoomsService {
     });
 
     if (!room) {
-      throw new BadRequestException('Room not found');
+      throw new Error('Room not found');
     }
 
     if (room.ownerId !== userId) {
-      throw new BadRequestException('You are not the owner of this room');
+      throw new Error('You are not the owner of this room');
     }
 
     if (room.status === 'waiting') {

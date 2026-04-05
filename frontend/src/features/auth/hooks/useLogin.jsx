@@ -5,14 +5,20 @@ import { useAuth } from "../authContext";
 export function useLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    await login({ username, password }); 
-    navigate("/home");
+    setError("");
+
+    try {
+      await login({ username, password });
+      navigate("/home");
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return {
@@ -20,6 +26,7 @@ export function useLogin() {
     password,
     setUsername,
     setPassword,
-    handleSubmit
+    handleSubmit,
+    error,
   };
 }

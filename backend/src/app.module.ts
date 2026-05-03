@@ -6,6 +6,8 @@ import { RoomsModule } from './rooms/rooms.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { dataSourceOptions } from './db/data-source';
+import { HistoryModule } from './history/history.module';
+import { PositionsModule } from './positions/positions.module';
 
 @Module({
   imports: [
@@ -13,6 +15,8 @@ import { dataSourceOptions } from './db/data-source';
     AuthModule,
     UsersModule,
     RoomsModule,
+    HistoryModule,
+    PositionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

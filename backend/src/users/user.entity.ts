@@ -4,20 +4,20 @@ import { Room } from '../rooms/room.entity';
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ unique: true })
-  username: string;
+  username!: string;
 
   @Column()
-  password: string;
+  password!: string;
 
   @Column({ default: 10 })
-  credits: number;
+  credits!: number;
 
   @OneToMany(() => Room, (room) => room.owner)
-  ownedRooms: Room[];
+  ownedRooms!: Room[];
 
   @OneToMany(() => Room, (room) => room.guest)
-  guestRooms: Room[];
+  guestRooms!: Room[];
 }

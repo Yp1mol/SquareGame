@@ -5,11 +5,11 @@ import {
   TableForeignKey,
 } from 'typeorm';
 
-export class CreateRoomsTable1771345260000 implements MigrationInterface {
+export class CreateBattleHistory1776515937554 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'rooms',
+        name: 'history',
         columns: [
           {
             name: 'id',
@@ -19,53 +19,39 @@ export class CreateRoomsTable1771345260000 implements MigrationInterface {
             generationStrategy: 'increment',
           },
           {
-            name: 'code',
-            type: 'varchar',
-            isUnique: true,
-            isNullable: false,
-          },
-          {
-            name: 'ownerId',
+            name: 'roomId',
             type: 'int',
             isNullable: false,
           },
           {
-            name: 'guestId',
+            name: 'winnerId',
             type: 'int',
             isNullable: true,
           },
           {
-            name: 'status',
-            type: 'varchar',
-            default: "'waiting'",
-          },
-          {
-            name: 'ownerReady',
-            type: 'boolean',
-            default: false,
-            isNullable: false,
-          },
-          {
-            name: 'guestReady',
-            type: 'boolean',
-            default: false,
-            isNullable: false,
-          },
-          {
-            name: 'ownerScore',
+            name: 'loserId',
             type: 'int',
-            default: 0,
-          },
-          {
-            name: 'guestScore',
-            type: 'int',
-            default: 0,
+            isNullable: true,
           },
           {
             name: 'cost',
             type: 'int',
-            default: 1,
             isNullable: false,
+          },
+          {
+            name: 'ownerPositions',
+            type: 'jsonb',
+            isNullable: true,
+          },
+          {
+            name: 'guestPositions',
+            type: 'jsonb',
+            isNullable: true,
+          },
+          {
+            name: 'createdAt',
+            type: 'timestamp',
+            default: 'now()',
           },
         ],
       }),
@@ -73,19 +59,29 @@ export class CreateRoomsTable1771345260000 implements MigrationInterface {
     );
 
     await queryRunner.createForeignKey(
-      'rooms',
+      'history',
       new TableForeignKey({
-        columnNames: ['ownerId'],
+        columnNames: ['roomId'],
         referencedColumnNames: ['id'],
-        referencedTableName: 'users',
+        referencedTableName: 'rooms',
         onDelete: 'CASCADE',
       }),
     );
 
     await queryRunner.createForeignKey(
-      'rooms',
+      'history',
       new TableForeignKey({
-        columnNames: ['guestId'],
+        columnNames: ['winnerId'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'users',
+        onDelete: 'SET NULL',
+      }),
+    );
+
+    await queryRunner.createForeignKey(
+      'history',
+      new TableForeignKey({
+        columnNames: ['loserId'],
         referencedColumnNames: ['id'],
         referencedTableName: 'users',
         onDelete: 'SET NULL',
@@ -94,6 +90,6 @@ export class CreateRoomsTable1771345260000 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('rooms');
+    await queryRunner.dropTable('history');
   }
 }

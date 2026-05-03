@@ -14,13 +14,29 @@ export default function GameView() {
         leaveRoom,
         handleDragEnd,
         sensors,
+        isOwner,
+        ownerReady,
+        guestReady,
+        finishSetup
     } = useGame();
+
+    const showFinishButton = () => {
+        if (isOwner && !ownerReady) {
+            return true;
+        }
+
+        if (!isOwner && !guestReady) {
+            return true;
+        }
+        
+        return false;
+    };
 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center p-6">
             <div className="w-full flex justify-between items-center mb-4 max-w-5xl">
-                <button 
-                    onClick={leaveRoom} 
+                <button
+                    onClick={leaveRoom}
                     className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition"
                 >
                     Leave Room
@@ -40,7 +56,7 @@ export default function GameView() {
                             <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
                                 <h1 className="text-8xl font-black text-white">{field.title}</h1>
                             </div>
-                            
+
                             {units
                                 .filter(unit => unit.title === field.title)
                                 .map((unit) => (
@@ -64,18 +80,27 @@ export default function GameView() {
                     </span>
                 </div>
                 <div className="flex gap-2">
-                    <button 
+                    <button
                         className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-[2rem] transition"
                         onClick={reset}
                     >
                         Reset
                     </button>
-                    <button 
+                    <button
                         className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-[2rem] transition"
                         onClick={savePositions}
                     >
                         Save
                     </button>
+
+                    {showFinishButton() && (
+                        <button
+                            onClick={finishSetup}
+                            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-[2rem] transition"
+                        >
+                            FINISH SETUP
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

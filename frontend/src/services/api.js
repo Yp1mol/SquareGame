@@ -22,7 +22,7 @@ export async function registerUser(data) {
   });
 
   if (!res.ok) {
-   throw new Error("Register failed");
+    throw new Error("Register failed");
   }
 
   return res.json();
@@ -149,7 +149,7 @@ export async function addCredit(token) {
   }
 
   const data = await res.json();
-  return data; 
+  return data;
 }
 
 export async function fetchMyRooms(token) {
@@ -167,7 +167,7 @@ export async function fetchMyRooms(token) {
 }
 
 export async function deleteRoom(roomCode, token) {
-  const res = await fetch(`${API_URL}/rooms/${roomCode}`, { 
+  const res = await fetch(`${API_URL}/rooms/${roomCode}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -176,6 +176,60 @@ export async function deleteRoom(roomCode, token) {
 
   if (!res.ok) {
     throw new Error("Failed to delete room");
+  }
+
+  return res.json();
+}
+
+export async function finishRoomSetup(roomCode, token) {
+  const res = await fetch(`${API_URL}/rooms/${roomCode}/finish`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to finish setup");
+  }
+
+  return res.json();
+}
+
+export async function getRoom(roomCode, token) {
+  const res = await fetch(`${API_URL}/rooms/${roomCode}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to get room");
+  }
+
+  return res.json();
+}
+
+export async function getUserHistory(token) {
+  const res = await fetch(`${API_URL}/history/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to get history");
+  }
+
+  return res.json();
+}
+
+export async function getBattleById(battleId, token) {
+  const res = await fetch(`${API_URL}/history/${battleId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  
+  if (!res.ok) {
+    throw new Error("Failed to get history");
   }
 
   return res.json();

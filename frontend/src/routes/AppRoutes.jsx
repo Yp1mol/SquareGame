@@ -12,7 +12,8 @@ import CreateRoomPage from '../pages/CreateRoomPage';
 import GamePage from '../pages/GamePage';
 import RoomsPage from '../pages/JoinRoomPage';
 import MyRoomsPage from '../pages/MyRoomsPage';
-
+import HistoryListPage from '../pages/HistoryListPage';
+import HistoryResultPage from '../pages/HistoryResultPage';
 function App() {
   return (
     <BrowserRouter>
@@ -27,6 +28,8 @@ function App() {
             <Route path="/home" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/history" element={<HistoryListPage />} />
+            <Route path="/history/:id" element={<HistoryResultPage />} />
           </Route>
         </Routes>
       </AuthProvider>

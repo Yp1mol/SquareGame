@@ -11,28 +11,28 @@ import { User } from '../users/user.entity';
 @Entity('positions')
 export class Position {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column()
-  roomId: number;
+  roomId?: number;
 
   @Column({ name: 'unit_id' })
-  unitId: string;
+  unitId?: string;
 
   @Column()
-  x: number;
+  x!: number;
 
   @Column()
-  y: number;
+  y!: number;
 
   @Column({ name: 'user_id', nullable: true })
-  userId: number;
+  userId!: number;
 
   @ManyToOne(() => Room, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'roomId' })
-  room: Room;
+  room!: Room;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'user_id' })
-  user: User;
+  user!: User;
 }

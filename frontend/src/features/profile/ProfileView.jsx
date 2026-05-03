@@ -55,7 +55,7 @@ export function ProfileView() {
                             Add Credits
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
-                           <button
+                            <button
                                 onClick={() => handleAddCredit(1)}
                                 className="bg-gradient-to-br from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white p-6 rounded-2xl shadow-lg transition transform hover:scale-105"
                             >
@@ -94,6 +94,7 @@ export function ProfileView() {
                     >
                         Logout
                     </button>
+                    <Link to="/history" className="ml-4 bg-gray-200 dark:bg-blue-700 hover:bg-blue-300 dark:hover:bg-blue-600 text-gray-700 dark:text-gray-200 px-8 py-3 rounded-full font-bold transition">History</Link>
                 </div>
             </div>
         </div>

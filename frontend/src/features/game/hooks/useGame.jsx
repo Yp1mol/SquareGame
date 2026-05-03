@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
-import { getPositions, savePositions } from "../../../services/api";
+import { getPositions, savePositions, getRoom, finishRoomSetup } from "../../../services/api";
 import { useAuth } from "../../auth/authContext";
 
 const FIELDS = {
@@ -35,13 +35,41 @@ const getDropPosition = (translatedRect, fieldRect) => {
 export function useGame() {
     const { code } = useParams();
     const navigate = useNavigate();
-    const { token } = useAuth();
-
+    const { token, user } = useAuth();
     const [fields] = useState([
         { id: FIELDS.ATTACK, title: "ATTACK", color: "bg-red-400 dark:bg-red-900", x: 0, y: 0 },
         { id: FIELDS.PROTECT, title: "PROTECT", color: "bg-blue-400 dark:bg-blue-900", x: 0, y: 0 },
     ]);
     const [units, setUnits] = useState(DEFAULT_UNITS);
+    const [isOwner, setIsOwner] = useState(false);
+    const [ownerReady, setOwnerReady] = useState(false);
+    const [guestReady, setGuestReady] = useState(false);
+
+    useEffect(() => {
+        const roomData = getRoom(code, token);
+        setIsOwner(roomData.ownerId === user?.id);
+        setOwnerReady(roomData.ownerReady);
+        setGuestReady(roomData.guestReady);
+
+    }, [code, token, user]);
+
+    const handleFinishSetup = async () => {
+        try {
+            const result = await finishRoomSetup(code, token);
+            alert(result.message);
+
+            const roomData = await getRoom(code, token);
+            setOwnerReady(roomData.ownerReady);
+            setGuestReady(roomData.guestReady);
+
+            if (result.winnerId) {
+                alert(`Battle finished! Winner gets ${result.winnerCredits} credits!`);
+                navigate('/home');
+            }
+        } catch (err) {
+            alert(err.message);
+        }
+    };
 
     useEffect(() => {
         const loadPositions = async () => {
@@ -171,7 +199,7 @@ export function useGame() {
 
         if (!position) {
             result = undefined;
-            
+
             return result;
         }
 
@@ -183,7 +211,7 @@ export function useGame() {
             } else {
                 updatedUnit = u;
             }
-            
+
             return updatedUnit;
         });
 
@@ -202,5 +230,9 @@ export function useGame() {
         leaveRoom,
         handleDragEnd,
         sensors,
+        isOwner,
+        ownerReady,
+        guestReady,
+        finishSetup: handleFinishSetup,
     };
 }

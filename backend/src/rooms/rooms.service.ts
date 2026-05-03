@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { Room } from './room.entity';
 import { UsersService } from '../users/users.service';
+
 @Injectable()
 export class RoomsService {
   constructor(
@@ -26,7 +27,7 @@ export class RoomsService {
     const room = this.roomsRepo.create({
       code,
       ownerId,
-      status: 'waiting',
+      status: 'draft',
       cost,
     });
 
@@ -38,6 +39,7 @@ export class RoomsService {
       where: {
         status: 'waiting',
         ownerId: Not(userId),
+        ownerReady: true,
       },
       relations: ['owner'],
       select: {
@@ -45,6 +47,7 @@ export class RoomsService {
         code: true,
         status: true,
         cost: true,
+        ownerReady: true,
         owner: {
           id: true,
           username: true,
@@ -90,13 +93,16 @@ export class RoomsService {
   async findByCode(code: string) {
     return await this.roomsRepo.findOne({
       where: { code },
-      relations: ['owner', 'opponent'],
+      relations: ['owner', 'guest'],
     });
   }
 
   async findMine(userId: number) {
     return await this.roomsRepo.find({
-      where: [{ ownerId: userId }, { guestId: userId }],
+      where: [
+        { ownerId: userId, status: 'waiting' },
+        { guestId: userId, status: 'waiting' },
+      ],
       relations: ['owner', 'guest'],
       select: {
         id: true,

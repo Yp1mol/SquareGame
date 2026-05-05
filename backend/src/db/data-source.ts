@@ -7,14 +7,16 @@ import * as path from 'path';
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'postgre',
-  password: '123123',
-  database: 'game_square',
+  url: process.env.DATABASE_URL || undefined,
+  host: process.env.DATABASE_URL ? undefined : 'localhost',
+  port: process.env.DATABASE_URL ? undefined : 5432,
+  username: process.env.DATABASE_URL ? undefined : 'postgre',
+  password: process.env.DATABASE_URL ? undefined : '123123',
+  database: process.env.DATABASE_URL ? undefined : 'game_square',
   entities: [User, Room, Position, History],
   migrations: [path.join(__dirname, 'migrations', '*.ts')],
   synchronize: true,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 };
 
 const dataSource = new DataSource(dataSourceOptions);

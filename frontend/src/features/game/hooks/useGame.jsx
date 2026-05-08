@@ -14,10 +14,28 @@ const UNITS = {
     PROTECT: "protect"
 };
 
-const DEFAULT_UNITS = [
-    { id: UNITS.ATTACK, title: "ATTACK", color: "bg-red-600", x: 100, y: 590 },
-    { id: UNITS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: 100, y: 590 },
-];
+const getDeploymentPosition = () => {
+    const zone = document.getElementById('deployment-zone');
+    const attackField = document.getElementById(FIELDS.ATTACK);
+    
+    if (!zone || !attackField) return { x: 100, y: 590 };
+    
+    const zoneRect = zone.getBoundingClientRect();
+    const fieldRect = attackField.getBoundingClientRect();
+    
+    return {
+        x: zoneRect.left - fieldRect.left + 20,
+        y: zoneRect.top - fieldRect.top + 20
+    };
+};
+
+const getDefaultUnits = () => {
+    const pos = getDeploymentPosition();
+    return [
+        { id: UNITS.ATTACK, title: "ATTACK", color: "bg-red-600", x: pos.x, y: pos.y },
+        { id: UNITS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: pos.x + 200, y: pos.y },
+    ];
+};
 
 const getDropPosition = (translatedRect, fieldRect) => {
     let position = null;
@@ -40,7 +58,7 @@ export function useGame() {
         { id: FIELDS.ATTACK, title: "ATTACK", color: "bg-red-400 dark:bg-red-900", x: 0, y: 0 },
         { id: FIELDS.PROTECT, title: "PROTECT", color: "bg-blue-400 dark:bg-blue-900", x: 0, y: 0 },
     ]);
-    const [units, setUnits] = useState(DEFAULT_UNITS);
+    const [units, setUnits] = useState(() => getDefaultUnits());
     const [isOwner, setIsOwner] = useState(false);
     const [ownerReady, setOwnerReady] = useState(false);
     const [guestReady, setGuestReady] = useState(false);
@@ -89,6 +107,15 @@ export function useGame() {
                     return unit;
                 });
                 setUnits(loadedUnits);
+            } else {
+                const defaultUnits = getDefaultUnits();
+                setUnits(defaultUnits);
+                const positionsToSave = defaultUnits.map(({ id, x, y }) => ({
+                    unitId: id,
+                    x: Math.round(x),
+                    y: Math.round(y),
+                }));
+                await savePositions(code, positionsToSave, token);
             }
         };
         loadPositions();
@@ -115,14 +142,15 @@ export function useGame() {
             return result;
         }
 
-        const positionsToSave = DEFAULT_UNITS.map(({ id, x, y }) => ({
+        const defaultUnits = getDefaultUnits();
+        const positionsToSave = defaultUnits.map(({ id, x, y }) => ({
             unitId: id,
             x: Math.round(x),
             y: Math.round(y),
         }));
 
         await savePositions(code, positionsToSave, token);
-        setUnits(DEFAULT_UNITS);
+        setUnits(defaultUnits);
         result = true;
 
         return result;

@@ -74,7 +74,7 @@ export default function GameView() {
             </DndContext>
 
             <div className="flex justify-center w-full gap-4">
-                <div className="w-3/4 h-50 bg-gray-50/50 dark:bg-gray-950 rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-800 flex items-center justify-center">
+                <div id="deployment-zone" className="w-3/4 h-50 bg-gray-50/50 dark:bg-gray-950 rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-800 flex items-center justify-center">
                     <span className="text-[10px] font-black text-gray-300 dark:text-gray-700 uppercase tracking-[0.3em]">
                         Deployment Zone
                     </span>

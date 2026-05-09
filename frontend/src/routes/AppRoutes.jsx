@@ -14,27 +14,30 @@ import RoomsPage from '../pages/JoinRoomPage';
 import MyRoomsPage from '../pages/MyRoomsPage';
 import HistoryListPage from '../pages/HistoryListPage';
 import HistoryResultPage from '../pages/HistoryResultPage';
+import ProtectedRoute from '../components/ProtectedRoute';
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
           <Route element={<MainLayout />}>
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/myrooms" element={<MyRoomsPage />} />
-            <Route path="/rooms" element={<RoomsPage />} />
-            <Route path="/game/:code" element={<GamePage />} />
-            <Route path="/createroom" element={<CreateRoomPage />} />
-            <Route path="/home" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/history" element={<HistoryListPage />} />
-            <Route path="/history/:id" element={<HistoryResultPage />} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/myrooms" element={<ProtectedRoute><MyRoomsPage /></ProtectedRoute>} />
+            <Route path="/rooms" element={<ProtectedRoute><RoomsPage /></ProtectedRoute>} />
+            <Route path="/game/:code" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
+            <Route path="/createroom" element={<ProtectedRoute><CreateRoomPage /></ProtectedRoute>} />
+            <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+            <Route path="/history" element={<ProtectedRoute><HistoryListPage /></ProtectedRoute>} />
+            <Route path="/history/:id" element={<ProtectedRoute><HistoryResultPage /></ProtectedRoute>} />
           </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>
   );
 }
+
 
 export default App;

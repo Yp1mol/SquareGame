@@ -4,29 +4,27 @@ import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
 export default function SquareDrag({ id, title, color, position }) {
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id,
-        data: {
-            id,
-            title,
-            position
-        }
+        data: { id, title, position }
     });
+
+    const style = {
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        transform: CSS.Translate.toString(transform),
+        transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
+    };
 
     return (
         <div
             ref={setNodeRef}
-            style={{
-                left: `${position.x}px`,
-                top: `${position.y}px`,
-                transform: CSS.Translate.toString(transform),
-                transition: 'all 0.3s cubic-bezier(0.3, 1.5, 0.6, 1)', 
-            }}
+            style={style}
             {...listeners}
             {...attributes}
             className={`absolute w-40 h-40 ${color} rounded-3xl shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing z-50 border-4 border-white/20 select-none`}
         >
-            <span className="text-[10px] font-black text-white uppercase text-center leading-none tracking-tighter">
+            <span className="text-[14px] font-black text-white uppercase text-center">
                 {title}
             </span>
         </div>

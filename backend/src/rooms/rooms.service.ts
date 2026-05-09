@@ -101,7 +101,7 @@ export class RoomsService {
     return await this.roomsRepo.find({
       where: [
         { ownerId: userId, status: 'waiting' },
-        { guestId: userId, status: 'waiting' },
+        { ownerId: userId, status: 'draft' },
       ],
       relations: ['owner', 'guest'],
       select: {

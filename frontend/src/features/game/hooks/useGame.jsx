@@ -14,29 +14,6 @@ const UNITS = {
     PROTECT: "protect"
 };
 
-const getDeploymentPosition = () => {
-    const zone = document.getElementById('deployment-zone');
-    const attackField = document.getElementById(FIELDS.ATTACK);
-    
-    if (!zone || !attackField) return { x: 100, y: 590 };
-    
-    const zoneRect = zone.getBoundingClientRect();
-    const fieldRect = attackField.getBoundingClientRect();
-    
-    return {
-        x: zoneRect.left - fieldRect.left + 20,
-        y: zoneRect.top - fieldRect.top + 20
-    };
-};
-
-const getDefaultUnits = () => {
-    const pos = getDeploymentPosition();
-    return [
-        { id: UNITS.ATTACK, title: "ATTACK", color: "bg-red-600", x: pos.x, y: pos.y },
-        { id: UNITS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: pos.x + 200, y: pos.y },
-    ];
-};
-
 const getDropPosition = (translatedRect, fieldRect) => {
     let position = null;
 
@@ -50,6 +27,42 @@ const getDropPosition = (translatedRect, fieldRect) => {
     return position;
 };
 
+const getDynamicDefaultUnits = () => {
+    const deployZone = document.getElementById("deployment-zone");
+    const attackField = document.getElementById(FIELDS.ATTACK);
+    const protectField = document.getElementById(FIELDS.PROTECT);
+
+    if (!deployZone || !attackField || !protectField) {
+        return [
+            { id: UNITS.ATTACK, title: "ATTACK", color: "bg-red-600", x: 0, y: 0 },
+            { id: UNITS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: 0, y: 0 },
+        ];
+    }
+
+    const dRect = deployZone.getBoundingClientRect();
+    const aRect = attackField.getBoundingClientRect();
+    const pRect = protectField.getBoundingClientRect();
+
+    const targetY = dRect.top + (dRect.height / 2) - 80;
+
+    return [
+        {
+            id: UNITS.ATTACK,
+            title: "ATTACK",
+            color: "bg-red-600",
+            x: (dRect.left + (dRect.width * 0.25)) - aRect.left - 80,
+            y: targetY - aRect.top
+        },
+        {
+            id: UNITS.PROTECT,
+            title: "PROTECT",
+            color: "bg-blue-600",
+            x: (dRect.left + (dRect.width * 0.75)) - pRect.left - 80,
+            y: targetY - pRect.top
+        }
+    ];
+};
+
 export function useGame() {
     const { code } = useParams();
     const navigate = useNavigate();
@@ -58,7 +71,7 @@ export function useGame() {
         { id: FIELDS.ATTACK, title: "ATTACK", color: "bg-red-400 dark:bg-red-900", x: 0, y: 0 },
         { id: FIELDS.PROTECT, title: "PROTECT", color: "bg-blue-400 dark:bg-blue-900", x: 0, y: 0 },
     ]);
-    const [units, setUnits] = useState(() => getDefaultUnits());
+    const [units, setUnits] = useState([]);
     const [isOwner, setIsOwner] = useState(false);
     const [ownerReady, setOwnerReady] = useState(false);
     const [guestReady, setGuestReady] = useState(false);
@@ -68,7 +81,6 @@ export function useGame() {
         setIsOwner(roomData.ownerId === user?.id);
         setOwnerReady(roomData.ownerReady);
         setGuestReady(roomData.guestReady);
-
     }, [code, token, user]);
 
     const handleFinishSetup = async () => {
@@ -91,34 +103,27 @@ export function useGame() {
 
     useEffect(() => {
         const loadPositions = async () => {
-            if (!token) {
-                return;
-            }
+            if (!token) return;
+            
             const data = await getPositions(code, token);
+            const dynamicDefaults = getDynamicDefaultUnits();
 
             if (data && data.length > 0) {
-                const loadedUnits = units.map(unit => {
+                const loadedUnits = dynamicDefaults.map(unit => {
                     const saved = data.find(p => p.unitId === unit.id);
-
                     if (saved) {
                         return { ...unit, x: saved.x, y: saved.y };
                     }
-
                     return unit;
                 });
                 setUnits(loadedUnits);
             } else {
-                const defaultUnits = getDefaultUnits();
-                setUnits(defaultUnits);
-                const positionsToSave = defaultUnits.map(({ id, x, y }) => ({
-                    unitId: id,
-                    x: Math.round(x),
-                    y: Math.round(y),
-                }));
-                await savePositions(code, positionsToSave, token);
+                setUnits(dynamicDefaults);
             }
         };
-        loadPositions();
+
+        const timeoutId = setTimeout(loadPositions, 50);
+        return () => clearTimeout(timeoutId);
     }, [code, token]);
 
     const sensors = useSensors(useSensor(PointerSensor, {
@@ -126,44 +131,31 @@ export function useGame() {
     }));
 
     const leaveRoom = () => {
-        let result;
-        result = navigate("/home");
-
+        let result = navigate("/home");
         return result;
     };
 
     const reset = async () => {
-        let result;
-
         if (!token) {
             alert('You need to be logged in');
-            result = false;
-
-            return result;
+            return false;
         }
 
-        const defaultUnits = getDefaultUnits();
-        const positionsToSave = defaultUnits.map(({ id, x, y }) => ({
+        const dynamicDefaults = getDynamicDefaultUnits();
+
+        const positionsToSave = dynamicDefaults.map(({ id, x, y }) => ({
             unitId: id,
             x: Math.round(x),
             y: Math.round(y),
         }));
 
         await savePositions(code, positionsToSave, token);
-        setUnits(defaultUnits);
-        result = true;
-
-        return result;
+        setUnits(dynamicDefaults);
+        return true;
     };
 
     const savePositionsToServer = async () => {
-        let result;
-
-        if (!token) {
-            result = false;
-
-            return result;
-        }
+        if (!token) return false;
 
         const positionsToSave = units.map(({ id, x, y }) => ({
             unitId: id,
@@ -172,81 +164,46 @@ export function useGame() {
         }));
 
         await savePositions(code, positionsToSave, token);
-        result = true;
-
-        return result;
+        return true;
     };
 
     const handleDragEnd = async (event) => {
         const { active, over } = event;
-        let result;
 
-        if (!over) {
-            result = undefined;
-            return result;
-        }
+        if (!over) return undefined;
 
         const unit = units.find(u => u.id === active.id);
-        if (!unit) {
-            result = undefined;
-
-            return result;
-        }
+        if (!unit) return undefined;
 
         const field = fields.find(f => f.id === over.id);
-        if (!field) {
-            result = undefined;
-
-            return result;
-        }
+        if (!field) return undefined;
 
         if (unit.title !== field.title) {
             alert(`${unit.title} can only land on ${field.title} field`);
-            result = undefined;
-
-            return result;
+            return undefined;
         }
 
         const fieldElement = document.getElementById(over.id);
-        if (!fieldElement) {
-            result = undefined;
-
-            return result;
-        }
+        if (!fieldElement) return undefined;
 
         const fieldRect = fieldElement.getBoundingClientRect();
         const translatedRect = active.rect.current.translated || active.rect.current.initial;
 
-        if (!translatedRect) {
-            result = undefined;
-
-            return result;
-        }
+        if (!translatedRect) return undefined;
 
         const position = getDropPosition(translatedRect, fieldRect);
 
-        if (!position) {
-            result = undefined;
-
-            return result;
-        }
+        if (!position) return undefined;
 
         const updatedUnits = units.map((u) => {
-            let updatedUnit;
-
             if (u.id === active.id) {
-                updatedUnit = { ...u, x: position.x, y: position.y };
-            } else {
-                updatedUnit = u;
+                return { ...u, x: position.x, y: position.y };
             }
-
-            return updatedUnit;
+            return u;
         });
 
         setUnits(updatedUnits);
-        result = updatedUnits;
-
-        return result;
+        return updatedUnits;
     };
 
     return {

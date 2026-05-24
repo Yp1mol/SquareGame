@@ -8,7 +8,8 @@ export async function loginUser(credentials) {
   });
 
   if (!res.ok) {
-    throw new Error("Login failed");
+    const error = await res.json();
+    throw new Error(error.message || "Login failed");
   }
 
   return res.json();
@@ -22,7 +23,8 @@ export async function registerUser(data) {
   });
 
   if (!res.ok) {
-    throw new Error("Register failed");
+    const error = await res.json();
+    throw new Error(error.message || "Register failed");
   }
 
   return res.json();
@@ -230,6 +232,18 @@ export async function getBattleById(battleId, token) {
   
   if (!res.ok) {
     throw new Error("Failed to get history");
+  }
+
+  return res.json();
+}
+export async function leaveRoom(roomCode, token) {
+  const res = await fetch(`${API_URL}/rooms/${roomCode}/leave`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  
+  if (!res.ok) {
+    throw new Error("Failed to leave room");
   }
 
   return res.json();

@@ -3,11 +3,11 @@ import { fetchMyRooms } from '../../../services/api';
 import { useAuth } from '../../auth/authContext';
 import { useNavigate } from 'react-router-dom';
 import { joinRoom } from '../../../services/api';
-import { deleteRoom } from '../../../services/api';
+import { deleteRoom, leaveRoom } from '../../../services/api';
 
 export function useMyRooms() {
     const [rooms, setRooms] = useState([]);
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -30,6 +30,14 @@ export function useMyRooms() {
         await joinRoom(roomCode, token);
         navigate(`/game/${roomCode}`);
     };
-
-    return { rooms, handleJoinRoom, handleDeleteRoom };
+    const handleLeaveRoom = async (roomCode) => {
+        try {
+            await leaveRoom(roomCode, token);
+            const data = await fetchMyRooms(token);
+            setRooms(data);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+    return { rooms, handleJoinRoom, handleDeleteRoom, handleLeaveRoom, user };
 }

@@ -15,9 +15,11 @@ export function useRegister() {
       await registerUser({ username, password });
       navigate("/login");
     } catch (err) {
-      setError(err.message);
-    } 
-  }
+      console.error("Register error details:", err);
+      const errorMessage = err.message || "Register failed";
+      setError(errorMessage);
+    }
+  };
 
   return {
     username,

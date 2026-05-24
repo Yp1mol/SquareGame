@@ -77,10 +77,37 @@ export function useGame() {
     const [guestReady, setGuestReady] = useState(false);
 
     useEffect(() => {
-        const roomData = getRoom(code, token);
-        setIsOwner(roomData.ownerId === user?.id);
-        setOwnerReady(roomData.ownerReady);
-        setGuestReady(roomData.guestReady);
+        const loadRoom = async () => {
+            if (!token || !code) return;
+            try {
+                const roomData = await getRoom(code, token);
+
+                if (roomData.ownerId !== user?.id && roomData.guestId !== user?.id) {
+                    alert('You are not a participant of this room');
+                    navigate('/home');
+                    return;
+                }
+                if (roomData.status === 'finished') {
+                    alert('This battle is already over');
+                    navigate('/home');
+                    return;
+                }
+                if (roomData.status === 'draft' && roomData.ownerId !== user?.id) {
+                    alert('Room is not ready yet');
+                    navigate('/home');
+                    return;
+                }
+
+                setIsOwner(roomData.ownerId === user?.id);
+                setOwnerReady(roomData.ownerReady);
+                setGuestReady(roomData.guestReady);
+            } catch (err) {
+                console.error(err);
+                alert('Room not found or unavailable');
+                navigate('/home');
+            }
+        };
+        loadRoom();
     }, [code, token, user]);
 
     const handleFinishSetup = async () => {
@@ -103,14 +130,16 @@ export function useGame() {
 
     useEffect(() => {
         const loadPositions = async () => {
-            if (!token) return;
-            
+            if (!token) {
+                return;
+            }
             const data = await getPositions(code, token);
             const dynamicDefaults = getDynamicDefaultUnits();
 
             if (data && data.length > 0) {
                 const loadedUnits = dynamicDefaults.map(unit => {
                     const saved = data.find(p => p.unitId === unit.id);
+
                     if (saved) {
                         return { ...unit, x: saved.x, y: saved.y };
                     }
@@ -155,8 +184,10 @@ export function useGame() {
     };
 
     const savePositionsToServer = async () => {
-        if (!token) return false;
-
+        if (!token) {
+            alert('You need to be logged in');
+            return false;
+        }
         const positionsToSave = units.map(({ id, x, y }) => ({
             unitId: id,
             x: Math.round(x),
@@ -170,30 +201,44 @@ export function useGame() {
     const handleDragEnd = async (event) => {
         const { active, over } = event;
 
-        if (!over) return undefined;
+        if (!over) {
+            return;
+        }
 
         const unit = units.find(u => u.id === active.id);
-        if (!unit) return undefined;
+        if (!unit) {
+            return;
+        }
 
         const field = fields.find(f => f.id === over.id);
-        if (!field) return undefined;
+
+        if (!field) {
+            return;
+        }
 
         if (unit.title !== field.title) {
             alert(`${unit.title} can only land on ${field.title} field`);
-            return undefined;
+            return;
         }
 
         const fieldElement = document.getElementById(over.id);
-        if (!fieldElement) return undefined;
+
+        if (!fieldElement) {
+            return;
+        }
 
         const fieldRect = fieldElement.getBoundingClientRect();
         const translatedRect = active.rect.current.translated || active.rect.current.initial;
 
-        if (!translatedRect) return undefined;
+        if (!translatedRect) {
+            return;
+        }
 
         const position = getDropPosition(translatedRect, fieldRect);
 
-        if (!position) return undefined;
+        if (!position) {
+            return;
+        }
 
         const updatedUnits = units.map((u) => {
             if (u.id === active.id) {

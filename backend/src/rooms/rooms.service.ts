@@ -100,8 +100,11 @@ export class RoomsService {
   async findMine(userId: number) {
     return await this.roomsRepo.find({
       where: [
-        { ownerId: userId, status: 'waiting' },
         { ownerId: userId, status: 'draft' },
+        { ownerId: userId, status: 'waiting' },
+        { ownerId: userId, status: 'playing' },
+        { guestId: userId, status: 'waiting' },
+        { guestId: userId, status: 'playing' },
       ],
       relations: ['owner', 'guest'],
       select: {
@@ -109,10 +112,12 @@ export class RoomsService {
         code: true,
         status: true,
         cost: true,
-        owner: {
-          id: true,
-          username: true,
-        },
+        ownerId: true,
+        guestId: true,
+        ownerReady: true,
+        guestReady: true,
+        owner: { id: true, username: true },
+        guest: { id: true, username: true },
       },
     });
   }
@@ -120,20 +125,49 @@ export class RoomsService {
   async remove(code: string, userId: number) {
     const room = await this.roomsRepo.findOne({
       where: { code },
+      relations: ['owner', 'guest'],
+    });
+    if (!room) {
+      throw new Error('Room not found');
+    }
+    if (room.ownerId !== userId) {
+      throw new Error('You are not the owner');
+    }
+
+    await this.usersService.addCredits(room.ownerId, room.cost);
+
+    if (room.guestId) {
+      await this.usersService.addCredits(room.guestId, room.cost);
+    }
+
+    return await this.roomsRepo.remove(room);
+  }
+
+  async leaveRoom(code: string, userId: number) {
+    const room = await this.roomsRepo.findOne({
+      where: { code },
+      relations: ['owner', 'guest'],
     });
 
     if (!room) {
       throw new Error('Room not found');
     }
 
-    if (room.ownerId !== userId) {
-      throw new Error('You are not the owner of this room');
+    if (room.guestId !== userId) {
+      throw new Error('You are not the guest');
     }
 
-    if (room.status === 'waiting') {
-      await this.usersService.addCredits(userId, room.cost);
+    if (room.guestId === null) {
+      throw new Error('Already left');
     }
 
-    return await this.roomsRepo.remove(room);
+    await this.usersService.addCredits(userId, room.cost);
+
+    await this.roomsRepo.update({ code }, { guestId: null, status: 'waiting' });
+
+    return this.roomsRepo.findOne({
+      where: { code },
+      relations: ['owner', 'guest'],
+    });
   }
 }

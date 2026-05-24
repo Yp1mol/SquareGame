@@ -99,4 +99,11 @@ export class RoomsController {
   async getRoom(@Param('code') code: string) {
     return this.roomsService.findByCode(code);
   }
+
+  @Post(':code/leave')
+  @UseGuards(AuthGuard)
+  async leaveRoom(@Param('code') code: string, @Req() req: any) {
+    const userId = (req.user?.sub || req.user?.id) as number;
+    return this.roomsService.leaveRoom(code, userId);
+  }
 }

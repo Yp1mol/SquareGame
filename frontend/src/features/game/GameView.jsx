@@ -25,12 +25,14 @@ export default function GameView() {
             return true;
         }
 
-        if (!isOwner && !guestReady) {
+        if (!isOwner && !guestReady && ownerReady) {
             return true;
         }
         
         return false;
     };
+
+    const hasFinishedSetup = isOwner ? ownerReady : guestReady;
 
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center p-6">
@@ -74,24 +76,24 @@ export default function GameView() {
             </DndContext>
 
             <div className="flex justify-center w-full gap-4">
-                <div id="deployment-zone" className="w-3/4 h-50 bg-gray-50/50 dark:bg-gray-950 rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-800 flex items-center justify-center">
-                    <span className="text-[10px] font-black text-gray-300 dark:text-gray-700 uppercase tracking-[0.3em]">
-                        Deployment Zone
-                    </span>
-                </div>
-                <div className="flex gap-2">
-                    <button
+                {!hasFinishedSetup && (
+                    <><div id="deployment-zone" className="w-3/4 h-50 bg-gray-50/50 dark:bg-gray-950 rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-gray-800 flex items-center justify-center">
+                        <span className="text-[10px] font-black text-gray-300 dark:text-gray-700 uppercase tracking-[0.3em]">
+                            Deployment Zone
+                        </span>
+                    </div><button
                         className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-[2rem] transition"
                         onClick={reset}
                     >
-                        Reset
-                    </button>
-                    <button
-                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-[2rem] transition"
-                        onClick={savePositions}
-                    >
-                        Save
-                    </button>
+                            Reset
+                        </button><button
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-[2rem] transition"
+                            onClick={savePositions}
+                        >
+                            Save
+                        </button></>
+                )}
+                <div className="flex gap-2">                   
 
                     {showFinishButton() && (
                         <button

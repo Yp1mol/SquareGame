@@ -17,7 +17,9 @@ export function useLogin() {
       await login({ username, password });
       navigate("/home");
     } catch (err) {
-      setError(err.message);
+      console.error("Login error details:", err);
+      const errorMessage = err.message || "Login failed";
+      setError(errorMessage);
     }
   };
 

@@ -6,6 +6,7 @@ import { Room } from '../rooms/room.entity';
 import { RoomsService } from '../rooms/rooms.service';
 import { UsersService } from '../users/users.service';
 import { HistoryService } from '../history/history.service';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class PositionsService {
@@ -100,7 +101,7 @@ export class PositionsService {
     const positions = await this.getByRoomAndUser(room.id, userId);
 
     if (positions.length !== 2) {
-      throw new Error('Please place both units before finishing');
+      throw new BadRequestException('Save your locations at first please');
     }
 
     if (Owner) {

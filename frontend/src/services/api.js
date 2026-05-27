@@ -138,20 +138,21 @@ export async function joinRoom(roomCode, token) {
   return res.json();
 }
 
-export async function addCredit(token) {
+export async function addCredit(token, amount) {
   const res = await fetch(`${API_URL}/users/credits/add`, {
     method: "POST",
     headers: {
+      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ amount }),
   });
 
   if (!res.ok) {
     throw new Error("Failed to add credit");
   }
 
-  const data = await res.json();
-  return data;
+  return res.json();
 }
 
 export async function fetchMyRooms(token) {

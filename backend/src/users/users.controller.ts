@@ -44,10 +44,11 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Post('credits/add')
-  async addCredits(@Req() req) {
+  async addCredits(@Req() req, @Body('amount') amount: number) {
     const userId = req.user.sub || req.user.id;
+    const addAmount = amount && amount > 0 ? amount : 1;
 
-    return this.usersService.addCredits(userId, 1);
+    return this.usersService.addCredits(userId, addAmount);
   }
 
   @UseGuards(AuthGuard)

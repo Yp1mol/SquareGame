@@ -30,8 +30,7 @@ export function useProfile() {
     };
 
     const handleAddCredit = async (amount) => {
-        amount;
-        const data = await addCredit(token);
+        const data = await addCredit(token, amount);
         setCredits(data.credits);
         setUser({ ...user, credits: data.credits });
     };

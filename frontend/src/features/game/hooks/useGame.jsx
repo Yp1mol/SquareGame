@@ -184,16 +184,20 @@ export function useGame() {
     };
 
     const savePositionsToServer = async () => {
-        if (!token) {
-            alert('You need to be logged in');
+        const defaults = getDynamicDefaultUnits();
+
+        if (units.some((unit, i) =>
+            Math.abs(unit.x == defaults[i].x) && Math.abs(unit.y == defaults[i].y)
+        )) {
+            alert('Move both units to the game fields before saving');
             return false;
         }
+
         const positionsToSave = units.map(({ id, x, y }) => ({
             unitId: id,
             x: Math.round(x),
             y: Math.round(y),
         }));
-
         await savePositions(code, positionsToSave, token);
         return true;
     };

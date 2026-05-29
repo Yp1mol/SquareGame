@@ -36,6 +36,7 @@ export default function RegisterPage() {
             placeholder="Choose Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            required
           />
           <input
             className="w-full border dark:border-gray-600 p-3 rounded-xl bg-transparent dark:text-white outline-none focus:ring-2 focus:ring-green-500"
@@ -43,6 +44,7 @@ export default function RegisterPage() {
             placeholder="Create Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
           <button 
             type="submit"

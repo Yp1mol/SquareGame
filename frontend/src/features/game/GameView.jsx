@@ -68,6 +68,7 @@ export default function GameView() {
                                         title={unit.title}
                                         color={unit.color}
                                         position={{ x: unit.x, y: unit.y }}
+                                        disabled={hasFinishedSetup}
                                     />
                                 ))}
                         </GameField>

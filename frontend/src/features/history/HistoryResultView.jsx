@@ -64,6 +64,7 @@ export default function HistoryResultView() {
                 title={unit.title}
                 color={unit.color}
                 position={{ x: unit.x, y: unit.y }}
+                disabled={true}
               />
             ))}
           </GameField>
@@ -86,6 +87,7 @@ export default function HistoryResultView() {
                 title={unit.title}
                 color={unit.color}
                 position={{ x: unit.x, y: unit.y }}
+                disabled={true}
               />
             ))}
           </GameField>

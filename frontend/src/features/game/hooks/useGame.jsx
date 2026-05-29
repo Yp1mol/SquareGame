@@ -15,16 +15,21 @@ const UNITS = {
 };
 
 const getDropPosition = (translatedRect, fieldRect) => {
-    let position = null;
+    if (!translatedRect || !fieldRect) {
+        return null;
+    }
+    const SQUARE_SIZE = 160;
+    const maxX = fieldRect.width - SQUARE_SIZE;
+    const maxY = fieldRect.height - SQUARE_SIZE;
 
-    if (translatedRect && fieldRect) {
-        position = {
-            x: translatedRect.left - fieldRect.left - 12 + 0.46875,
-            y: translatedRect.top - fieldRect.top - 12 + 0.46875,
-        };
+    let x = translatedRect.left - fieldRect.left - 12 + 0.46875;
+    let y = translatedRect.top - fieldRect.top - 12 + 0.46875;
+
+    if (x < 0 || y < 0 || x > maxX || y > maxY) {
+        return null;
     }
 
-    return position;
+    return { x, y };
 };
 
 const getDynamicDefaultUnits = () => {
@@ -187,7 +192,7 @@ export function useGame() {
         const defaults = getDynamicDefaultUnits();
 
         if (units.some((unit, i) =>
-            Math.abs(unit.x == defaults[i].x) && Math.abs(unit.y == defaults[i].y)
+            Math.abs(unit.x - defaults[i].x) < 3 && Math.abs(unit.y - defaults[i].y) < 3
         )) {
             alert('Move both units to the game fields before saving');
             return false;

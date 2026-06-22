@@ -237,6 +237,7 @@ export async function getBattleById(battleId, token) {
 
   return res.json();
 }
+
 export async function leaveRoom(roomCode, token) {
   const res = await fetch(`${API_URL}/rooms/${roomCode}/leave`, {
     method: "POST",
@@ -247,5 +248,56 @@ export async function leaveRoom(roomCode, token) {
     throw new Error("Failed to leave room");
   }
 
+  return res.json();
+}
+
+export async function getAllNotifications(token) {
+  const res = await fetch(`${API_URL}/notifications/all`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to fetch all notifications');
+  }
+
+  return res.json();
+}
+
+export async function markNotificationAsRead(id, token) {
+  const res = await fetch(`${API_URL}/notifications/${id}/read`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to mark as read');
+  }
+
+  return true;
+}
+
+export async function deleteNotification(id, token) {
+  const res = await fetch(`${API_URL}/notifications/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to delete notification');
+  }
+
+  return res.json();
+}
+
+export async function deleteAllNotifications(token) {
+  const res = await fetch(`${API_URL}/notifications`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to delete all notifications');
+  }
+  
   return res.json();
 }

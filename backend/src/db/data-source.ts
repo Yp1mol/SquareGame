@@ -4,6 +4,7 @@ import { Room } from '../rooms/room.entity';
 import { Position } from '../positions/position.entity';
 import { History } from '../history/history.entity';
 import * as path from 'path';
+import { Notification } from '../notifications/notification.entity';
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
@@ -13,7 +14,7 @@ export const dataSourceOptions: DataSourceOptions = {
   username: process.env.DATABASE_URL ? undefined : 'postgre',
   password: process.env.DATABASE_URL ? undefined : '123123',
   database: process.env.DATABASE_URL ? undefined : 'game_square',
-  entities: [User, Room, Position, History],
+  entities: [User, Room, Position, History, Notification],
   migrations: [path.join(__dirname, 'migrations', '*.ts')],
   synchronize: true,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,

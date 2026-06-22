@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './auth.guard';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AuthGuard } from './auth.guard';
       secret: 'supersecretkey',
       signOptions: { expiresIn: '7d' },
     }),
+    NotificationsModule,
   ],
   providers: [AuthService, AuthGuard],
   controllers: [AuthController],

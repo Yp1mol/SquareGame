@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { Room } from './room.entity';
 import { UsersService } from '../users/users.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class RoomsService {
@@ -10,28 +11,55 @@ export class RoomsService {
     @InjectRepository(Room)
     private roomsRepo: Repository<Room>,
     private usersService: UsersService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async create(code: string, ownerId: number, cost: number) {
-    const user = await this.usersService.findOne(ownerId);
+    const queryRunner = this.roomsRepo.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const user = await this.usersService.findOne(
+        ownerId,
+        queryRunner.manager,
+      );
 
-    if (!user) {
-      throw new Error('User not found');
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      if (user.credits < cost) {
+        throw new Error(`need ${cost} credit`);
+      }
+
+      await this.usersService.withdrawCredits(
+        ownerId,
+        cost,
+        queryRunner.manager,
+      );
+      const roomRepo = queryRunner.manager.getRepository(Room);
+      const room = this.roomsRepo.create({
+        code,
+        ownerId,
+        status: 'draft',
+        cost,
+      });
+      const savedRoom = await roomRepo.save(room);
+
+      await this.notificationsService.create(
+        ownerId,
+        'room_created',
+        `Room ${code} successfully created for ${cost} credits`,
+      );
+
+      await queryRunner.commitTransaction();
+      return savedRoom;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    if (user.credits < cost) {
-      throw new Error(`need ${cost} credit`);
-    }
-
-    await this.usersService.withdrawCredits(ownerId, cost);
-    const room = this.roomsRepo.create({
-      code,
-      ownerId,
-      status: 'draft',
-      cost,
-    });
-
-    return await this.roomsRepo.save(room);
   }
 
   async findToJoin(userId: number) {
@@ -57,37 +85,55 @@ export class RoomsService {
   }
 
   async joinRoom(code: string, userId: number) {
-    const room = await this.roomsRepo.findOne({
-      where: { code },
-      relations: ['owner', 'guest'],
-    });
+    const queryRunner = this.roomsRepo.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const repo = queryRunner.manager.getRepository(Room);
+      const room = await repo.findOne({
+        where: { code },
+        relations: ['owner', 'guest'],
+      });
 
-    if (!room) {
-      throw new Error('Room not found');
+      if (!room) {
+        throw new Error('Room not found');
+      }
+
+      if (room.ownerId === userId || room.guestId === userId) {
+        return room;
+      }
+
+      if (room.status !== 'waiting') {
+        throw new Error('Room already started');
+      }
+      const user = await this.usersService.findOne(userId, queryRunner.manager);
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      if (user.credits < room.cost) {
+        throw new Error(`need ${room.cost} credits`);
+      }
+
+      await this.usersService.withdrawCredits(
+        userId,
+        room.cost,
+        queryRunner.manager,
+      );
+      room.guestId = userId;
+      room.status = 'playing';
+
+      const savedjoin = await repo.save(room);
+      await queryRunner.commitTransaction();
+
+      return savedjoin;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    if (room.ownerId === userId || room.guestId === userId) {
-      return room;
-    }
-
-    if (room.status !== 'waiting') {
-      throw new Error('Room already started');
-    }
-    const user = await this.usersService.findOne(userId);
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    if (user.credits < room.cost) {
-      throw new Error(`need ${room.cost} credits`);
-    }
-
-    await this.usersService.withdrawCredits(userId, room.cost);
-    room.guestId = userId;
-    room.status = 'playing';
-
-    return await this.roomsRepo.save(room);
   }
 
   async findByCode(code: string) {
@@ -123,51 +169,94 @@ export class RoomsService {
   }
 
   async remove(code: string, userId: number) {
-    const room = await this.roomsRepo.findOne({
-      where: { code },
-      relations: ['owner', 'guest'],
-    });
-    if (!room) {
-      throw new Error('Room not found');
-    }
-    if (room.ownerId !== userId) {
-      throw new Error('You are not the owner');
-    }
+    const queryRunner = this.roomsRepo.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const repo = queryRunner.manager.getRepository(Room);
+      const room = await repo.findOne({
+        where: { code },
+        relations: ['owner', 'guest'],
+      });
+      if (!room) {
+        throw new Error('Room not found');
+      }
+      if (room.ownerId !== userId) {
+        throw new Error('You are not the owner');
+      }
 
-    await this.usersService.addCredits(room.ownerId, room.cost);
+      await this.usersService.addCredits(
+        room.ownerId,
+        room.cost,
+        queryRunner.manager,
+      );
 
-    if (room.guestId) {
-      await this.usersService.addCredits(room.guestId, room.cost);
+      if (room.guestId) {
+        await this.usersService.addCredits(
+          room.guestId,
+          room.cost,
+          queryRunner.manager,
+        );
+      }
+
+      await this.notificationsService.create(
+        room.ownerId,
+        'room_removed',
+        `Room ${room.code} successfully removed`,
+      );
+      const removed = await repo.remove(room);
+      await queryRunner.commitTransaction();
+      return removed;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    return await this.roomsRepo.remove(room);
   }
 
   async leaveRoom(code: string, userId: number) {
-    const room = await this.roomsRepo.findOne({
-      where: { code },
-      relations: ['owner', 'guest'],
-    });
+    const queryRunner = this.roomsRepo.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const repo = queryRunner.manager.getRepository(Room);
+      const room = await repo.findOne({
+        where: { code },
+        relations: ['owner', 'guest'],
+      });
 
-    if (!room) {
-      throw new Error('Room not found');
+      if (!room) {
+        throw new Error('Room not found');
+      }
+
+      if (room.guestId !== userId) {
+        throw new Error('You are not the guest');
+      }
+
+      if (room.guestId === null) {
+        throw new Error('Already left');
+      }
+
+      await this.usersService.addCredits(
+        userId,
+        room.cost,
+        queryRunner.manager,
+      );
+
+      await repo.update({ code }, { guestId: null, status: 'waiting' });
+
+      const updated = repo.findOne({
+        where: { code },
+        relations: ['owner', 'guest'],
+      });
+      await queryRunner.commitTransaction();
+      return updated;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    if (room.guestId !== userId) {
-      throw new Error('You are not the guest');
-    }
-
-    if (room.guestId === null) {
-      throw new Error('Already left');
-    }
-
-    await this.usersService.addCredits(userId, room.cost);
-
-    await this.roomsRepo.update({ code }, { guestId: null, status: 'waiting' });
-
-    return this.roomsRepo.findOne({
-      where: { code },
-      relations: ['owner', 'guest'],
-    });
   }
 }

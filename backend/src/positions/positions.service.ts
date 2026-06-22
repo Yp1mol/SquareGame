@@ -7,6 +7,7 @@ import { RoomsService } from '../rooms/rooms.service';
 import { UsersService } from '../users/users.service';
 import { HistoryService } from '../history/history.service';
 import { BadRequestException } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PositionsService {
@@ -18,6 +19,7 @@ export class PositionsService {
     private roomsService: RoomsService,
     private usersService: UsersService,
     private historyService: HistoryService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async findByRoomCode(code: string, userId: number) {
@@ -159,6 +161,18 @@ export class PositionsService {
       ownerPositions,
       guestPositions,
     });
+
+    await this.notificationsService.create(
+      room.ownerId,
+      'battle_finished',
+      ` battle finished. ${result === room.ownerId ? 'You won!' : 'You lost.'}`,
+    );
+
+    await this.notificationsService.create(
+      room.guestId,
+      'battle_finished',
+      ` battle finished. ${result === room.guestId ? 'You won!' : 'You lost.'}`,
+    );
 
     return {
       message: 'Battle finished!',

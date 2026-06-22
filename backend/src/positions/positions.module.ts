@@ -6,6 +6,7 @@ import { PositionsService } from './positions.service';
 import { RoomsModule } from '../rooms/rooms.module';
 import { UsersModule } from '../users/users.module';
 import { HistoryModule } from '../history/history.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { HistoryModule } from '../history/history.module';
     forwardRef(() => RoomsModule),
     UsersModule,
     HistoryModule,
+    NotificationsModule,
   ],
   providers: [PositionsService],
   exports: [PositionsService],

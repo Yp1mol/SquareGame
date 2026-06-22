@@ -15,6 +15,7 @@ import MyRoomsPage from '../pages/MyRoomsPage';
 import HistoryListPage from '../pages/HistoryListPage';
 import HistoryResultPage from '../pages/HistoryResultPage';
 import ProtectedRoute from '../components/ProtectedRoute';
+import NotificationsPage from '../pages/NotificationsPage';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><HistoryListPage /></ProtectedRoute>} />
             <Route path="/history/:id" element={<ProtectedRoute><HistoryResultPage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<NotificationsPage />} />
           </Route>
         </Routes>
       </AuthProvider>

@@ -5,12 +5,14 @@ import { RoomsService } from './rooms.service';
 import { RoomsController } from './rooms.controller';
 import { UsersModule } from '../users/users.module';
 import { PositionsModule } from '../positions/positions.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Room]),
     UsersModule,
     forwardRef(() => PositionsModule),
+    NotificationsModule,
   ],
   providers: [RoomsService],
   controllers: [RoomsController],

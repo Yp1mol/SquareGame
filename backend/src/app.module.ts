@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { dataSourceOptions } from './db/data-source';
 import { HistoryModule } from './history/history.module';
 import { PositionsModule } from './positions/positions.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { PositionsModule } from './positions/positions.module';
     RoomsModule,
     HistoryModule,
     PositionsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

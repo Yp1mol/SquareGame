@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { User } from './user.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+    private notificationsService: NotificationsService,
   ) {}
 
   create(data: Partial<User>) {
@@ -16,8 +18,11 @@ export class UsersService {
     return this.usersRepo.save(user);
   }
 
-  findOne(id: number) {
-    return this.usersRepo.findOne({
+  findOne(id: number, entityManager?: EntityManager) {
+    const repo = entityManager
+      ? entityManager.getRepository(User)
+      : this.usersRepo;
+    return repo.findOne({
       where: { id },
       select: ['id', 'username', 'password', 'credits'],
     });
@@ -50,20 +55,39 @@ export class UsersService {
     return { credits: user.credits };
   }
 
-  async addCredits(id: number, amount: number = 1) {
-    const user = await this.usersRepo.findOne({ where: { id } });
+  async addCredits(
+    id: number,
+    amount: number = 1,
+    entityManager?: EntityManager,
+  ) {
+    const repo = entityManager
+      ? entityManager.getRepository(User)
+      : this.usersRepo;
+    const user = await repo.findOne({ where: { id } });
 
     if (!user) {
       throw new Error('User not found');
     }
     user.credits += amount;
-    await this.usersRepo.save(user);
 
-    return { credits: user.credits };
+    await this.notificationsService.create(
+      id,
+      'credits_added',
+      ` ${amount} credits added to your account`,
+    );
+
+    return repo.save(user);
   }
 
-  async withdrawCredits(id: number, amount: number = 1) {
-    const user = await this.usersRepo.findOne({ where: { id } });
+  async withdrawCredits(
+    id: number,
+    amount: number = 1,
+    entityManager?: EntityManager,
+  ) {
+    const repo = entityManager
+      ? entityManager.getRepository(User)
+      : this.usersRepo;
+    const user = await repo.findOne({ where: { id } });
 
     if (!user) {
       throw new Error('User not found');
@@ -74,8 +98,6 @@ export class UsersService {
     }
     user.credits -= amount;
 
-    await this.usersRepo.save(user);
-
-    return { credits: user.credits };
+    return repo.save(user);
   }
 }

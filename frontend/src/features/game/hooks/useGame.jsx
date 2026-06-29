@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { getPositions, savePositions, getRoom, finishRoomSetup } from "../../../services/api";
 import { useAuth } from "../../auth/authContext";
 
@@ -14,58 +14,35 @@ const UNITS = {
     PROTECT: "protect"
 };
 
+const VIRTUAL_BASE = 1000; 
+
+const getDynamicDefaultUnits = () => {
+    return [
+        { id: UNITS.ATTACK, title: "ATTACK", color: "bg-red-600", x: 0, y: 0 },
+        { id: UNITS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: 0, y: 0 },
+    ];
+};
+
 const getDropPosition = (translatedRect, fieldRect) => {
     if (!translatedRect || !fieldRect) {
         return null;
     }
-    const SQUARE_SIZE = 160;
-    const maxX = fieldRect.width - SQUARE_SIZE;
-    const maxY = fieldRect.height - SQUARE_SIZE;
+    
+    const squareSize = fieldRect.width * 0.3;
+    const maxX = fieldRect.width - squareSize;
+    const maxY = fieldRect.height - squareSize;
 
-    let x = translatedRect.left - fieldRect.left - 12 + 0.46875;
-    let y = translatedRect.top - fieldRect.top - 12 + 0.46875;
+    let x = translatedRect.left - fieldRect.left;
+    let y = translatedRect.top - fieldRect.top;
 
     if (x < 0 || y < 0 || x > maxX || y > maxY) {
         return null;
     }
 
-    return { x, y };
-};
+    const normX = (x / fieldRect.width) * VIRTUAL_BASE;
+    const normY = (y / fieldRect.height) * VIRTUAL_BASE;
 
-const getDynamicDefaultUnits = () => {
-    const deployZone = document.getElementById("deployment-zone");
-    const attackField = document.getElementById(FIELDS.ATTACK);
-    const protectField = document.getElementById(FIELDS.PROTECT);
-
-    if (!deployZone || !attackField || !protectField) {
-        return [
-            { id: UNITS.ATTACK, title: "ATTACK", color: "bg-red-600", x: 0, y: 0 },
-            { id: UNITS.PROTECT, title: "PROTECT", color: "bg-blue-600", x: 0, y: 0 },
-        ];
-    }
-
-    const dRect = deployZone.getBoundingClientRect();
-    const aRect = attackField.getBoundingClientRect();
-    const pRect = protectField.getBoundingClientRect();
-
-    const targetY = dRect.top + (dRect.height / 2) - 80;
-
-    return [
-        {
-            id: UNITS.ATTACK,
-            title: "ATTACK",
-            color: "bg-red-600",
-            x: (dRect.left + (dRect.width * 0.25)) - aRect.left - 80,
-            y: targetY - aRect.top
-        },
-        {
-            id: UNITS.PROTECT,
-            title: "PROTECT",
-            color: "bg-blue-600",
-            x: (dRect.left + (dRect.width * 0.75)) - pRect.left - 80,
-            y: targetY - pRect.top
-        }
-    ];
+    return { x: normX, y: normY };
 };
 
 export function useGame() {
@@ -80,6 +57,22 @@ export function useGame() {
     const [isOwner, setIsOwner] = useState(false);
     const [ownerReady, setOwnerReady] = useState(false);
     const [guestReady, setGuestReady] = useState(false);
+    const [fieldDimensions, setFieldDimensions] = useState({ width: 0, height: 0 });
+
+    useEffect(() => {
+        const updateDimensions = () => {
+            const fieldElement = document.getElementById(FIELDS.ATTACK);
+
+            if (fieldElement) {
+                const rect = fieldElement.getBoundingClientRect();
+                setFieldDimensions({ width: rect.width, height: rect.height });
+            }
+        };
+
+        updateDimensions();
+        window.addEventListener("resize", updateDimensions);
+        return () => window.removeEventListener("resize", updateDimensions);
+    }, []);
 
     useEffect(() => {
         const loadRoom = async () => {
@@ -139,12 +132,11 @@ export function useGame() {
                 return;
             }
             const data = await getPositions(code, token);
-            const dynamicDefaults = getDynamicDefaultUnits();
+            const defaultUnits = getDynamicDefaultUnits();
 
             if (data && data.length > 0) {
-                const loadedUnits = dynamicDefaults.map(unit => {
+                const loadedUnits = defaultUnits.map(unit => {
                     const saved = data.find(p => p.unitId === unit.id);
-
                     if (saved) {
                         return { ...unit, x: saved.x, y: saved.y };
                     }
@@ -152,7 +144,7 @@ export function useGame() {
                 });
                 setUnits(loadedUnits);
             } else {
-                setUnits(dynamicDefaults);
+                setUnits(defaultUnits);
             }
         };
 
@@ -162,11 +154,12 @@ export function useGame() {
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: { distance: 5 }
+    }), useSensor(TouchSensor, {
+        activationConstraint: { distance: 5 }
     }));
 
     const leaveRoom = () => {
-        let result = navigate("/home");
-        return result;
+        return navigate("/home");
     };
 
     const reset = async () => {
@@ -175,37 +168,37 @@ export function useGame() {
             return false;
         }
 
-        const dynamicDefaults = getDynamicDefaultUnits();
-
-        const positionsToSave = dynamicDefaults.map(({ id, x, y }) => ({
+        const defaultUnits = getDynamicDefaultUnits();
+        const positionsToSave = defaultUnits.map(({ id, x, y }) => ({
             unitId: id,
             x: Math.round(x),
             y: Math.round(y),
         }));
 
         await savePositions(code, positionsToSave, token);
-        setUnits(dynamicDefaults);
+        setUnits(defaultUnits);
         return true;
     };
 
     const savePositionsToServer = async () => {
-        const defaults = getDynamicDefaultUnits();
+    const defaults = getDynamicDefaultUnits();
 
-        if (units.some((unit, i) =>
-            Math.abs(unit.x - defaults[i].x) < 3 && Math.abs(unit.y - defaults[i].y) < 3
-        )) {
-            alert('Move both units to the game fields before saving');
-            return false;
-        }
+    if (units.some((unit, i) =>
+        Math.abs(unit.x - defaults[i].x) < 3 && Math.abs(unit.y - defaults[i].y) < 3
+    )) {
+        alert('Move both units to the game fields before saving');
+        return false;
+    }
 
-        const positionsToSave = units.map(({ id, x, y }) => ({
-            unitId: id,
-            x: Math.round(x),
-            y: Math.round(y),
-        }));
-        await savePositions(code, positionsToSave, token);
-        return true;
-    };
+    const positionsToSave = units.map(({ id, x, y }) => ({
+        unitId: id,
+        x: Math.round(x),
+        y: Math.round(y),
+    }));
+
+    await savePositions(code, positionsToSave, token);
+    return true;
+};
 
     const handleDragEnd = async (event) => {
         const { active, over } = event;
@@ -213,12 +206,11 @@ export function useGame() {
         if (!over) {
             return;
         }
-
         const unit = units.find(u => u.id === active.id);
+
         if (!unit) {
             return;
         }
-
         const field = fields.find(f => f.id === over.id);
 
         if (!field) {
@@ -229,13 +221,11 @@ export function useGame() {
             alert(`${unit.title} can only land on ${field.title} field`);
             return;
         }
-
         const fieldElement = document.getElementById(over.id);
 
         if (!fieldElement) {
             return;
         }
-
         const fieldRect = fieldElement.getBoundingClientRect();
         const translatedRect = active.rect.current.translated || active.rect.current.initial;
 
@@ -273,5 +263,6 @@ export function useGame() {
         ownerReady,
         guestReady,
         finishSetup: handleFinishSetup,
+        fieldDimensions
     };
 }

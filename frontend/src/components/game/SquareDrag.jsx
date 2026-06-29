@@ -3,18 +3,30 @@ import PropTypes from "prop-types";
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 
-export default function SquareDrag({ id, title, color, position, disabled = false }) {
+export default function SquareDrag({ id, title, color, position, fieldDimensions, disabled = false }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id,
         data: { id, title, position },
         disabled,
     });
 
+    const { width: fieldWidth, height: fieldHeight } = fieldDimensions;
+
+    const pixelX = (position.x / 1000) * fieldWidth;
+    const pixelY = (position.y / 1000) * fieldHeight;
+
+    const squareSize =  fieldWidth * 0.3;
+
     const style = {
-        left: `${position.x}px`,
-        top: `${position.y}px`,
+        position: 'absolute',
+        left: `${pixelX}px`,
+        top: `${pixelY}px`,
+        width: `${squareSize}px`,
+        height: `${squareSize}px`,
         transform: CSS.Translate.toString(transform),
         transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28)',
+        touchAction: 'none',
+        userSelect: 'none',
     };
 
     const cursorClass = disabled ? 'cursor-default' : 'cursor-grab active:cursor-grabbing';
@@ -23,10 +35,10 @@ export default function SquareDrag({ id, title, color, position, disabled = fals
         <div
             ref={setNodeRef}
             style={style}
-            {...(disabled ? {} : { ...listeners, ...attributes })} 
-            className={`absolute w-40 h-40 ${color} rounded-3xl shadow-2xl flex items-center justify-center ${cursorClass} z-50 border-4 border-white/20 select-none`}
+            {...(disabled ? {} : { ...listeners, ...attributes })}
+            className={`rounded-xl md:rounded-3xl shadow-2xl flex items-center justify-center ${color} ${cursorClass} z-50 border-2 md:border-4 border-white/20 select-none`}
         >
-            <span className="text-[14px] font-black text-white uppercase text-center">
+            <span className="text-[10px] md:text-[14px] font-black text-white uppercase text-center p-1 break-all">
                 {title}
             </span>
         </div>
@@ -40,6 +52,10 @@ SquareDrag.propTypes = {
     position: PropTypes.shape({
         x: PropTypes.number,
         y: PropTypes.number,
+    }).isRequired,
+    fieldDimensions: PropTypes.shape({
+        width: PropTypes.number,
+        height: PropTypes.number,
     }).isRequired,
     disabled: PropTypes.bool,
 };

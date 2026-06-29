@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 
 export default function HistoryResultView() {
   const { id } = useParams();
-  const { battle } = useBattle(id);
+  const { battle, fieldDimensions } = useBattle(id);
 
   if (!battle) {
     return <div className="text-center p-8">Battle not found</div>;
@@ -31,22 +31,22 @@ export default function HistoryResultView() {
   const winnerName = battle.winner?.username || "Draw";
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center p-6">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center p-4 md:p-6">
       <div className="w-full max-w-5xl mb-4">
         <Link
           to="/profile"
-          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+          className="px-3 py-1.5 text-sm md:px-4 md:py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition"
         >
           Back
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold mb-2 dark:text-white">Battle Result</h1>
-      <div className="text-lg mb-6">
+      <h1 className="text-xl md:text-2xl font-bold mb-2 dark:text-white">Battle Result</h1>
+      <div className="text-base md:text-lg mb-6 dark:text-gray-300">
         Winner: <span className="font-bold text-green-600">{winnerName}</span>
       </div>
 
-      <div className="w-full grid grid-cols-2 gap-4 mb-6 relative">
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 relative">
         <div className="relative">
           <GameField
             id="owner-field"
@@ -54,7 +54,7 @@ export default function HistoryResultView() {
             color="bg-blue-400 dark:bg-blue-900"
           >
             <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-              <h1 className="text-8xl font-black text-blue-800 dark:text-blue-200">OWNER</h1>
+              <h1 className="text-4xl md:text-8xl font-black text-blue-800 dark:text-blue-200">OWNER</h1>
             </div>
 
             {ownerFieldUnits.map((unit) => (
@@ -64,6 +64,7 @@ export default function HistoryResultView() {
                 title={unit.title}
                 color={unit.color}
                 position={{ x: unit.x, y: unit.y }}
+                fieldDimensions={fieldDimensions}
                 disabled={true}
               />
             ))}
@@ -77,7 +78,7 @@ export default function HistoryResultView() {
             color="bg-red-400 dark:bg-red-900"
           >
             <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-              <h1 className="text-8xl font-black text-red-800 dark:text-red-200">GUEST</h1>
+              <h1 className="text-4xl md:text-8xl font-black text-red-800 dark:text-red-200">GUEST</h1>
             </div>
 
             {guestFieldUnits.map((unit) => (
@@ -87,6 +88,7 @@ export default function HistoryResultView() {
                 title={unit.title}
                 color={unit.color}
                 position={{ x: unit.x, y: unit.y }}
+                fieldDimensions={fieldDimensions}
                 disabled={true}
               />
             ))}
@@ -94,7 +96,7 @@ export default function HistoryResultView() {
         </div>
       </div>
 
-      <div className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
+      <div className="text-center text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-4">
         Battle cost: {battle.cost} credits
       </div>
     </div>

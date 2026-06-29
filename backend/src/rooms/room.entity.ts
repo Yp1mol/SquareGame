@@ -12,43 +12,43 @@ import { Position } from '../positions/position.entity';
 @Entity('rooms')
 export class Room {
   @PrimaryGeneratedColumn()
-  id!: number;
+  id: number;
 
   @Column({ unique: true })
-  code!: string;
+  code: string;
 
   @Column({ default: 'draft' })
-  status!: string;
+  status: string;
 
   @Column({ default: false })
-  ownerReady!: boolean;
+  ownerReady: boolean;
 
   @Column({ default: false })
-  guestReady!: boolean;
+  guestReady: boolean;
 
   @Column({ default: 0 })
-  ownerScore!: number;
+  ownerScore: number;
 
   @Column({ default: 0 })
-  guestScore!: number;
+  guestScore: number;
 
   @Column()
-  ownerId!: number;
+  ownerId: number;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'ownerId' })
-  owner!: User;
+  owner: User;
 
   @Column({ nullable: true })
-  guestId!: number;
+  guestId: number;
 
   @Column({ default: 1 })
-  cost!: number;
+  cost: number;
 
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'guestId' })
-  guest!: User;
+  guest: User;
 
   @OneToMany(() => Position, (position) => position.room, { cascade: true })
-  positions!: Position[];
+  positions: Position[];
 }

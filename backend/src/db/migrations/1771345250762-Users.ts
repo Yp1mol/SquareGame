@@ -14,7 +14,7 @@ export class Users1771345250762 implements MigrationInterface {
             generationStrategy: 'increment',
           },
           {
-            name: 'username',
+            name: 'name',
             type: 'varchar',
             isUnique: true,
             isNullable: false,

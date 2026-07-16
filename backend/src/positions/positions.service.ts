@@ -1,33 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Position } from './position.entity';
 import { Room } from '../rooms/room.entity';
-import { RoomsService } from '../rooms/rooms.service';
 import { UsersService } from '../users/users.service';
 import { HistoryService } from '../history/history.service';
-import { BadRequestException } from '@nestjs/common';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RoomStatus } from '../rooms/room-status.enum';
 
 @Injectable()
 export class PositionsService {
   constructor(
     @InjectRepository(Position)
-    private positionRepository: Repository<Position>,
+    private readonly positionRepository: Repository<Position>,
     @InjectRepository(Room)
-    private roomRepository: Repository<Room>,
-    private roomsService: RoomsService,
-    private usersService: UsersService,
-    private historyService: HistoryService,
-    private notificationsService: NotificationsService,
+    private readonly roomRepository: Repository<Room>,
+    private readonly usersService: UsersService,
+    private readonly historyService: HistoryService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
-  async findByRoomCode(code: string, userId: number) {
-    await this.roomsService.joinRoom(code, userId);
+  async findByRoomCode(code: string, userId: number): Promise<Position[]> {
     const room = await this.roomRepository.findOne({ where: { code } });
 
     if (!room) {
-      return [];
+      throw new NotFoundException('Room not found');
+    }
+
+    if (room.ownerId !== userId && room.guestId !== userId) {
+      throw new ForbiddenException('You are not a participant of this room');
     }
 
     return this.positionRepository.find({
@@ -37,7 +43,8 @@ export class PositionsService {
       },
     });
   }
-  async getByRoomAndUser(roomId: number, userId: number) {
+
+  async getByRoomAndUser(roomId: number, userId: number): Promise<Position[]> {
     return this.positionRepository.find({
       where: {
         roomId: roomId,
@@ -48,21 +55,26 @@ export class PositionsService {
 
   async savePositions(
     code: string,
-    positions: { unitId: string; x: number; y: number }[],
+    positions: { unitId: string; x: number; y: number }[] | undefined, // Сделали массив опциональным на всякий случай
     userId: number,
-  ) {
-    await this.roomsService.joinRoom(code, userId);
+  ): Promise<Position[]> {
     const room = await this.roomRepository.findOne({ where: { code } });
 
     if (!room) {
-      throw new Error('Room not found');
+      throw new NotFoundException('Room not found');
     }
 
-    if (
-      (room.ownerId === userId && room.ownerReady) ||
-      (room.guestId === userId && room.guestReady)
-    ) {
-      throw new Error('You have already finished setup');
+    if (room.ownerId !== userId && room.guestId !== userId) {
+      throw new ForbiddenException('You are not a participant of this room');
+    }
+
+    const isOwnerReady =
+      room.ownerId === userId && room.statusId === RoomStatus.OWNER_READY;
+    const isGuestReady =
+      room.guestId === userId && room.statusId === RoomStatus.GUEST_READY;
+
+    if (isOwnerReady || isGuestReady) {
+      throw new BadRequestException('You have already finished setup');
     }
 
     await this.positionRepository.delete({
@@ -70,7 +82,9 @@ export class PositionsService {
       userId: userId,
     });
 
-    const newPositions = positions.map((pos) =>
+    const positionsArray = positions || [];
+
+    const newPositions = positionsArray.map((pos) =>
       this.positionRepository.create({
         roomId: room.id,
         unitId: pos.unitId,
@@ -82,6 +96,7 @@ export class PositionsService {
 
     return this.positionRepository.save(newPositions);
   }
+
   async deleteByRoomId(roomId: number) {
     return this.positionRepository.delete({ roomId });
   }
@@ -90,14 +105,14 @@ export class PositionsService {
     const room = await this.roomRepository.findOne({ where: { code } });
 
     if (!room) {
-      throw new Error('Room not found');
+      throw new NotFoundException('Room not found');
     }
 
-    const Owner = room.ownerId === userId;
-    const Guest = room.guestId === userId;
+    const isOwner = room.ownerId === userId;
+    const isGuest = room.guestId === userId;
 
-    if (!Owner && !Guest) {
-      throw new Error('You are not a participant of this room');
+    if (!isOwner && !isGuest) {
+      throw new ForbiddenException('You are not a participant of this room');
     }
 
     const positions = await this.getByRoomAndUser(room.id, userId);
@@ -106,9 +121,8 @@ export class PositionsService {
       throw new BadRequestException('Save your locations at first please');
     }
 
-    if (Owner) {
-      room.ownerReady = true;
-      room.status = 'waiting';
+    if (isOwner) {
+      room.statusId = RoomStatus.OWNER_READY;
       await this.roomRepository.save(room);
 
       return {
@@ -116,8 +130,8 @@ export class PositionsService {
       };
     }
 
-    if (Guest) {
-      room.guestReady = true;
+    if (isGuest) {
+      room.statusId = RoomStatus.GUEST_READY;
       await this.roomRepository.save(room);
 
       return this.finishRoom(room);
@@ -137,41 +151,30 @@ export class PositionsService {
     if (!result) {
       await this.usersService.addCredits(room.ownerId, room.cost);
       await this.usersService.addCredits(room.guestId, room.cost);
-    }
-
-    if (result) {
+    } else {
       await this.usersService.addCredits(result, room.cost * 2);
     }
-    let loser: number | undefined;
 
-    if (result === room.ownerId) {
-      loser = room.guestId;
-    } else {
-      loser = room.ownerId;
-    }
-
-    room.status = 'finished';
+    room.statusId = RoomStatus.PLAYING;
     await this.roomRepository.save(room);
 
     await this.historyService.create({
       roomId: room.id,
-      winnerId: result ?? undefined,
-      loserId: loser ?? undefined,
+      ownerId: room.ownerId,
+      guestId: room.guestId,
       cost: room.cost,
-      ownerPositions,
-      guestPositions,
     });
 
     await this.notificationsService.create(
       room.ownerId,
       'battle_finished',
-      ` battle finished. ${result === room.ownerId ? 'You won!' : 'You lost.'}`,
+      `Battle finished. ${result === room.ownerId ? 'You won!' : 'You lost.'}`,
     );
 
     await this.notificationsService.create(
       room.guestId,
       'battle_finished',
-      ` battle finished. ${result === room.guestId ? 'You won!' : 'You lost.'}`,
+      `Battle finished. ${result === room.guestId ? 'You won!' : 'You lost.'}`,
     );
 
     return {

@@ -19,19 +19,14 @@ export class CreateBattleHistory1776515937554 implements MigrationInterface {
             generationStrategy: 'increment',
           },
           {
-            name: 'roomId',
+            name: 'room_id',
             type: 'int',
             isNullable: false,
           },
           {
-            name: 'winnerId',
+            name: 'status_id',
             type: 'int',
-            isNullable: true,
-          },
-          {
-            name: 'loserId',
-            type: 'int',
-            isNullable: true,
+            isNullable: false,
           },
           {
             name: 'cost',
@@ -39,17 +34,17 @@ export class CreateBattleHistory1776515937554 implements MigrationInterface {
             isNullable: false,
           },
           {
-            name: 'ownerPositions',
+            name: 'owner_positions',
             type: 'jsonb',
             isNullable: true,
           },
           {
-            name: 'guestPositions',
+            name: 'guest_positions',
             type: 'jsonb',
             isNullable: true,
           },
           {
-            name: 'createdAt',
+            name: 'created_at',
             type: 'timestamp',
             default: 'now()',
           },
@@ -61,30 +56,10 @@ export class CreateBattleHistory1776515937554 implements MigrationInterface {
     await queryRunner.createForeignKey(
       'history',
       new TableForeignKey({
-        columnNames: ['roomId'],
+        columnNames: ['room_id'],
         referencedColumnNames: ['id'],
         referencedTableName: 'rooms',
         onDelete: 'CASCADE',
-      }),
-    );
-
-    await queryRunner.createForeignKey(
-      'history',
-      new TableForeignKey({
-        columnNames: ['winnerId'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'users',
-        onDelete: 'SET NULL',
-      }),
-    );
-
-    await queryRunner.createForeignKey(
-      'history',
-      new TableForeignKey({
-        columnNames: ['loserId'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'users',
-        onDelete: 'SET NULL',
       }),
     );
   }

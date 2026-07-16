@@ -19,7 +19,7 @@ export class Positions1774028863756 implements MigrationInterface {
             generationStrategy: 'increment',
           },
           {
-            name: 'roomId',
+            name: 'room_id',
             type: 'int',
             isNullable: false,
           },
@@ -51,7 +51,7 @@ export class Positions1774028863756 implements MigrationInterface {
     await queryRunner.createForeignKey(
       'positions',
       new TableForeignKey({
-        columnNames: ['roomId'],
+        columnNames: ['room_id'],
         referencedColumnNames: ['id'],
         referencedTableName: 'rooms',
         onDelete: 'CASCADE',

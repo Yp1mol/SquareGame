@@ -1,20 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { Room } from './room.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RoomStatus } from './room-status.enum';
 
 @Injectable()
 export class RoomsService {
   constructor(
     @InjectRepository(Room)
-    private roomsRepo: Repository<Room>,
-    private usersService: UsersService,
-    private notificationsService: NotificationsService,
+    private readonly roomsRepo: Repository<Room>,
+    private readonly usersService: UsersService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
-  async create(code: string, ownerId: number, cost: number) {
+  async create(code: string, ownerId: number, cost: number): Promise<Room> {
     const queryRunner = this.roomsRepo.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -25,11 +31,11 @@ export class RoomsService {
       );
 
       if (!user) {
-        throw new Error('User not found');
+        throw new NotFoundException('User not found');
       }
 
       if (user.credits < cost) {
-        throw new Error(`need ${cost} credit`);
+        throw new BadRequestException(`Need ${cost} credits`);
       }
 
       await this.usersService.withdrawCredits(
@@ -37,11 +43,12 @@ export class RoomsService {
         cost,
         queryRunner.manager,
       );
+
       const roomRepo = queryRunner.manager.getRepository(Room);
-      const room = this.roomsRepo.create({
+      const room = roomRepo.create({
         code,
         ownerId,
-        status: 'draft',
+        statusId: RoomStatus.WAITING,
         cost,
       });
       const savedRoom = await roomRepo.save(room);
@@ -62,20 +69,24 @@ export class RoomsService {
     }
   }
 
-  async findToJoin(userId: number) {
-    return await this.roomsRepo.find({
-      where: {
-        status: 'waiting',
-        ownerId: Not(userId),
-        ownerReady: true,
-      },
+  async findToJoin(userId: number): Promise<Room[]> {
+    return this.roomsRepo.find({
+      where: [
+        {
+          statusId: RoomStatus.WAITING,
+          ownerId: Not(userId),
+        },
+        {
+          statusId: RoomStatus.OWNER_READY,
+          ownerId: Not(userId),
+        },
+      ],
       relations: ['owner'],
       select: {
         id: true,
         code: true,
-        status: true,
+        statusId: true,
         cost: true,
-        ownerReady: true,
         owner: {
           id: true,
           username: true,
@@ -84,7 +95,7 @@ export class RoomsService {
     });
   }
 
-  async joinRoom(code: string, userId: number) {
+  async joinRoom(code: string, userId: number): Promise<Room> {
     const queryRunner = this.roomsRepo.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -96,24 +107,28 @@ export class RoomsService {
       });
 
       if (!room) {
-        throw new Error('Room not found');
+        throw new NotFoundException('Room not found');
       }
 
       if (room.ownerId === userId || room.guestId === userId) {
         return room;
       }
 
-      if (room.status !== 'waiting') {
-        throw new Error('Room already started');
+      if (
+        room.statusId !== RoomStatus.WAITING &&
+        room.statusId !== RoomStatus.OWNER_READY
+      ) {
+        throw new BadRequestException('Room already started or unavailable');
       }
+
       const user = await this.usersService.findOne(userId, queryRunner.manager);
 
       if (!user) {
-        throw new Error('User not found');
+        throw new NotFoundException('User not found');
       }
 
       if (user.credits < room.cost) {
-        throw new Error(`need ${room.cost} credits`);
+        throw new BadRequestException(`Need ${room.cost} credits`);
       }
 
       await this.usersService.withdrawCredits(
@@ -122,12 +137,12 @@ export class RoomsService {
         queryRunner.manager,
       );
       room.guestId = userId;
-      room.status = 'playing';
+      room.statusId = RoomStatus.PLAYING;
 
-      const savedjoin = await repo.save(room);
+      const savedJoin = await repo.save(room);
       await queryRunner.commitTransaction();
 
-      return savedjoin;
+      return savedJoin;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
@@ -136,39 +151,40 @@ export class RoomsService {
     }
   }
 
-  async findByCode(code: string) {
-    return await this.roomsRepo.findOne({
+  async findByCode(code: string): Promise<Room | null> {
+    return this.roomsRepo.findOne({
       where: { code },
       relations: ['owner', 'guest'],
     });
   }
 
-  async findMine(userId: number) {
-    return await this.roomsRepo.find({
+  async findMine(userId: number): Promise<Room[]> {
+    return this.roomsRepo.find({
       where: [
-        { ownerId: userId, status: 'draft' },
-        { ownerId: userId, status: 'waiting' },
-        { ownerId: userId, status: 'playing' },
-        { guestId: userId, status: 'waiting' },
-        { guestId: userId, status: 'playing' },
+        { ownerId: userId, statusId: RoomStatus.WAITING },
+        { ownerId: userId, statusId: RoomStatus.OWNER_READY },
+        { ownerId: userId, statusId: RoomStatus.GUEST_READY },
+        { ownerId: userId, statusId: RoomStatus.PLAYING },
+        { guestId: userId, statusId: RoomStatus.WAITING },
+        { guestId: userId, statusId: RoomStatus.OWNER_READY },
+        { guestId: userId, statusId: RoomStatus.GUEST_READY },
+        { guestId: userId, statusId: RoomStatus.PLAYING },
       ],
       relations: ['owner', 'guest'],
       select: {
         id: true,
         code: true,
-        status: true,
+        statusId: true,
         cost: true,
         ownerId: true,
         guestId: true,
-        ownerReady: true,
-        guestReady: true,
         owner: { id: true, username: true },
         guest: { id: true, username: true },
       },
     });
   }
 
-  async remove(code: string, userId: number) {
+  async remove(code: string, userId: number): Promise<Room> {
     const queryRunner = this.roomsRepo.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -179,10 +195,10 @@ export class RoomsService {
         relations: ['owner', 'guest'],
       });
       if (!room) {
-        throw new Error('Room not found');
+        throw new NotFoundException('Room not found');
       }
       if (room.ownerId !== userId) {
-        throw new Error('You are not the owner');
+        throw new ForbiddenException('You are not the owner');
       }
 
       await this.usersService.addCredits(
@@ -215,7 +231,7 @@ export class RoomsService {
     }
   }
 
-  async leaveRoom(code: string, userId: number) {
+  async leaveRoom(code: string, userId: number): Promise<Room | null> {
     const queryRunner = this.roomsRepo.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -227,15 +243,11 @@ export class RoomsService {
       });
 
       if (!room) {
-        throw new Error('Room not found');
+        throw new NotFoundException('Room not found');
       }
 
       if (room.guestId !== userId) {
-        throw new Error('You are not the guest');
-      }
-
-      if (room.guestId === null) {
-        throw new Error('Already left');
+        throw new ForbiddenException('You are not the guest');
       }
 
       await this.usersService.addCredits(
@@ -244,12 +256,15 @@ export class RoomsService {
         queryRunner.manager,
       );
 
-      await repo.update({ code }, { guestId: null, status: 'waiting' });
+      room.guestId = null;
+      room.statusId = RoomStatus.WAITING;
+      await repo.save(room);
 
-      const updated = repo.findOne({
+      const updated = await repo.findOne({
         where: { code },
         relations: ['owner', 'guest'],
       });
+
       await queryRunner.commitTransaction();
       return updated;
     } catch (err) {

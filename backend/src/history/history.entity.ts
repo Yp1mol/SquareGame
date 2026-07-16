@@ -4,45 +4,50 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { Room } from '../rooms/room.entity';
 import { User } from '../users/user.entity';
+import { RoomStatus } from '../rooms/room-status.enum';
 
 @Entity('history')
 export class History {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
+  @Column({ name: 'room_id', nullable: true })
   roomId!: number;
 
-  @ManyToOne(() => Room)
-  @JoinColumn({ name: 'roomId' })
+  @ManyToOne(() => Room, { nullable: true })
+  @JoinColumn({ name: 'room_id' })
   room!: Room;
 
-  @Column({ nullable: true })
-  winnerId!: number;
+  @Column({ name: 'owner_id' })
+  ownerId!: number;
 
   @ManyToOne(() => User)
-  @JoinColumn({ name: 'winnerId' })
-  winner!: User;
+  @JoinColumn({ name: 'owner_id' })
+  owner!: User;
 
-  @Column({ nullable: true })
-  loserId!: number;
+  @Column({ name: 'guest_id', nullable: true })
+  guestId!: number;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'loserId' })
-  loser!: User;
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'guest_id' })
+  guest!: User;
+
+  @Column({ name: 'status_id', type: 'int' })
+  statusId!: RoomStatus;
 
   @Column()
   cost!: number;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ name: 'owner_positions', type: 'jsonb', nullable: true })
   ownerPositions!: any;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ name: 'guest_positions', type: 'jsonb', nullable: true })
   guestPositions!: any;
 
-  @Column({ type: 'timestamp', default: () => 'now()' })
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

@@ -25,39 +25,28 @@ export class CreateRoomsTable1771345260000 implements MigrationInterface {
             isNullable: false,
           },
           {
-            name: 'ownerId',
+            name: 'owner_id',
             type: 'int',
             isNullable: false,
           },
           {
-            name: 'guestId',
+            name: 'guest_id',
             type: 'int',
             isNullable: true,
           },
           {
-            name: 'status',
-            type: 'varchar',
-            default: "'waiting'",
-          },
-          {
-            name: 'ownerReady',
-            type: 'boolean',
-            default: false,
+            name: 'status_id',
+            type: 'int',
+            default: 0,
             isNullable: false,
           },
           {
-            name: 'guestReady',
-            type: 'boolean',
-            default: false,
-            isNullable: false,
-          },
-          {
-            name: 'ownerScore',
+            name: 'owner_score',
             type: 'int',
             default: 0,
           },
           {
-            name: 'guestScore',
+            name: 'guest_score',
             type: 'int',
             default: 0,
           },
@@ -68,7 +57,7 @@ export class CreateRoomsTable1771345260000 implements MigrationInterface {
             isNullable: false,
           },
           {
-            name: 'createdAt',
+            name: 'created_at',
             type: 'timestamp',
             default: 'now()',
             isNullable: false,
@@ -81,7 +70,7 @@ export class CreateRoomsTable1771345260000 implements MigrationInterface {
     await queryRunner.createForeignKey(
       'rooms',
       new TableForeignKey({
-        columnNames: ['ownerId'],
+        columnNames: ['owner_id'],
         referencedColumnNames: ['id'],
         referencedTableName: 'users',
         onDelete: 'CASCADE',
@@ -91,7 +80,7 @@ export class CreateRoomsTable1771345260000 implements MigrationInterface {
     await queryRunner.createForeignKey(
       'rooms',
       new TableForeignKey({
-        columnNames: ['guestId'],
+        columnNames: ['guest_id'],
         referencedColumnNames: ['id'],
         referencedTableName: 'users',
         onDelete: 'SET NULL',

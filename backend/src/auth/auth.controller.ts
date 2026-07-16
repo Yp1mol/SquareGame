@@ -1,22 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private auth: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('login')
-  login(@Body() body: any) {
-    return this.auth.login(body.username, body.password);
+  async login(@Body() body: { username: string; password: string }) {
+    return this.authService.login(body.username, body.password);
   }
 
   @Public()
   @Post('register')
-  async register(@Body() body: any) {
-    return this.auth.register(body.username, body.password);
+  async register(@Body() body: { username: string; password: string }) {
+    return this.authService.register(body.username, body.password);
   }
 }

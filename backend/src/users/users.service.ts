@@ -9,7 +9,7 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
-    private notificationsService: NotificationsService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   create(data: Partial<User>) {

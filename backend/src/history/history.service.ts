@@ -7,19 +7,18 @@ import { History } from './history.entity';
 export class HistoryService {
   constructor(
     @InjectRepository(History)
-    private historyRepo: Repository<History>,
+    private readonly historyRepo: Repository<History>,
   ) {}
 
   async create(data: Partial<History>) {
     const record = this.historyRepo.create(data);
-
     return this.historyRepo.save(record);
   }
 
   async getUserHistory(userId: number) {
     return this.historyRepo.find({
-      where: [{ winnerId: userId }, { loserId: userId }],
-      relations: ['room', 'winner', 'loser'],
+      where: [{ ownerId: userId }, { guestId: userId }],
+      relations: ['room', 'owner', 'guest'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -27,7 +26,7 @@ export class HistoryService {
   async findById(id: number) {
     return this.historyRepo.findOne({
       where: { id },
-      relations: ['room', 'winner', 'loser'],
+      relations: ['room', 'owner', 'guest'],
     });
   }
 }

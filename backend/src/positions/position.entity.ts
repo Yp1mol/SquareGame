@@ -13,7 +13,7 @@ export class Position {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ name: 'room_id' })
   roomId: number;
 
   @Column({ name: 'unit_id' })
@@ -29,7 +29,7 @@ export class Position {
   userId: number;
 
   @ManyToOne(() => Room, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'roomId' })
+  @JoinColumn({ name: 'room_id' })
   room: Room;
 
   @ManyToOne(() => User, { nullable: true })

@@ -1,13 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { History } from './history.entity';
+import { Position } from '../positions/position.entity';
 
 @Injectable()
 export class HistoryService {
   constructor(
     @InjectRepository(History)
     private readonly historyRepo: Repository<History>,
+    @InjectRepository(Position)
+    private readonly positionRepo: Repository<Position>,
   ) {}
 
   async create(data: Partial<History>) {
@@ -24,9 +27,18 @@ export class HistoryService {
   }
 
   async findById(id: number) {
-    return this.historyRepo.findOne({
+    const history = await this.historyRepo.findOne({
       where: { id },
       relations: ['room', 'owner', 'guest'],
     });
+
+    if (!history) {
+      throw new NotFoundException('Battle history not found');
+    }
+
+    return history;
+  }
+  async deleteAll(userId: number) {
+    return this.historyRepo.delete([{ ownerId: userId }, { guestId: userId }]);
   }
 }

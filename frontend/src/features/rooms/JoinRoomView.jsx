@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useJoinRoom } from './hooks/useJoinRoom';
+import 'react-loading-skeleton/dist/skeleton.css';
+import SkeletonRoom from './skeleton/skeletomRoom';
 
 export default function JoinRoomView() {
-  const { rooms, handleJoinRoom } = useJoinRoom();
+  const { rooms, handleJoinRoom, loading } = useJoinRoom();
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 p-6">
@@ -19,7 +21,11 @@ export default function JoinRoomView() {
 
         <h1 className="text-2xl font-bold mb-6 dark:text-white">Available Rooms</h1>
 
-        {rooms.length === 0 ? (
+        {loading ? (
+          <div className="space-y-4">
+            <SkeletonRoom type="join" />
+          </div>
+        ) : rooms.length === 0 ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             No waiting rooms. Create one!
           </div>
@@ -43,7 +49,7 @@ export default function JoinRoomView() {
                 </div>
                 <button
                   onClick={() => handleJoinRoom(room.code, room.cost)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                  className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
                 >
                   Join
                 </button>

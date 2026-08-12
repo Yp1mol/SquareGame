@@ -6,18 +6,23 @@ import { useNavigate } from 'react-router-dom';
 export function useJoinRoom() {
     const [rooms, setRooms] = useState([]);
     const { token, user, setUser } = useAuth();
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     useEffect(() => {
         const loadRooms = async () => {
-            if (!token) {
-                return
-            }
-            const data = await fetchRooms(token);
-            setRooms(data);
+          if (!token) {
+            return;
+          }
+          const [data] = await Promise.all([
+            fetchRooms(token, true),
+            new Promise(resolve => setTimeout(resolve, 1000))
+          ]);
+          setRooms(data);
+          setLoading(false);
         };
         loadRooms();
-    }, [token]);
+      }, [token]);
 
     const handleJoinRoom = async (roomCode, roomCost) => {
         if (!token) {
@@ -36,5 +41,5 @@ export function useJoinRoom() {
 
     };
 
-    return { rooms, handleJoinRoom };
+    return { rooms, handleJoinRoom, loading };
 }

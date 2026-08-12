@@ -1,9 +1,22 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import axios from 'axios';
+
+export const API_URL = 'https://band-gold-gravity-ciao.trycloudflare.com';
+
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+    'Bypass-Tunnel-Reminder': 'true',
+  },
+});
 
 export async function loginUser(credentials) {
   const res = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+    },
     body: JSON.stringify(credentials),
   });
 
@@ -18,7 +31,7 @@ export async function loginUser(credentials) {
 export async function registerUser(data) {
   const res = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
     body: JSON.stringify(data),
   });
 
@@ -35,6 +48,7 @@ export async function updateUsername(token, username) {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ username }),
@@ -51,6 +65,7 @@ export async function fetchProfile(token) {
   const res = await fetch(`${API_URL}/users/me`, {
     headers: {
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
   });
 
@@ -65,6 +80,7 @@ export async function getPositions(roomCode, token) {
   const res = await fetch(`${API_URL}/rooms/${roomCode}/positions`, {
     headers: {
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
   });
 
@@ -81,6 +97,7 @@ export async function savePositions(roomCode, positions, token) {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
     body: JSON.stringify({ positions }),
   });
@@ -98,6 +115,7 @@ export async function createRoom(roomCode, token, cost) {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
     body: JSON.stringify({ code: roomCode, cost }),
   });
@@ -113,6 +131,7 @@ export async function fetchRooms(token) {
   const res = await fetch(`${API_URL}/rooms`, {
     headers: {
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
   });
 
@@ -124,10 +143,11 @@ export async function fetchRooms(token) {
 }
 
 export async function joinRoom(roomCode, token) {
-  const res = await fetch(`${API_URL}/rooms/${roomCode}/join`, {
+  const res = await fetch(`${API_URL}/rooms/${roomCode}/guests`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
   });
 
@@ -139,11 +159,12 @@ export async function joinRoom(roomCode, token) {
 }
 
 export async function addCredit(token, amount) {
-  const res = await fetch(`${API_URL}/users/credits/add`, {
+  const res = await fetch(`${API_URL}/users/me/credits/add`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
     body: JSON.stringify({ amount }),
   });
@@ -155,10 +176,11 @@ export async function addCredit(token, amount) {
   return res.json();
 }
 
-export async function fetchMyRooms(token) {
-  const res = await fetch(`${API_URL}/rooms/mine`, {
+export async function fetchMyRooms(token, isMyOnly = true) {
+  const res = await fetch(`${API_URL}/rooms?my=${isMyOnly}`, {
     headers: {
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
   });
 
@@ -174,6 +196,7 @@ export async function deleteRoom(roomCode, token) {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
   });
 
@@ -185,10 +208,11 @@ export async function deleteRoom(roomCode, token) {
 }
 
 export async function finishRoomSetup(roomCode, token) {
-  const res = await fetch(`${API_URL}/rooms/${roomCode}/finish`, {
+  const res = await fetch(`${API_URL}/rooms/${roomCode}/setups`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
   });
 
@@ -204,6 +228,7 @@ export async function getRoom(roomCode, token) {
   const res = await fetch(`${API_URL}/rooms/${roomCode}`, {
     headers: {
       Authorization: `Bearer ${token}`,
+      "ngrok-skip-browser-warning": "true",
     },
   });
 
@@ -216,7 +241,7 @@ export async function getRoom(roomCode, token) {
 
 export async function getUserHistory(token) {
   const res = await fetch(`${API_URL}/history/me`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
   });
 
   if (!res.ok) {
@@ -228,9 +253,9 @@ export async function getUserHistory(token) {
 
 export async function getBattleById(battleId, token) {
   const res = await fetch(`${API_URL}/history/${battleId}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
   });
-  
+
   if (!res.ok) {
     throw new Error("Failed to get history");
   }
@@ -239,11 +264,11 @@ export async function getBattleById(battleId, token) {
 }
 
 export async function leaveRoom(roomCode, token) {
-  const res = await fetch(`${API_URL}/rooms/${roomCode}/leave`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+  const res = await fetch(`${API_URL}/rooms/${roomCode}/guests`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
   });
-  
+
   if (!res.ok) {
     throw new Error("Failed to leave room");
   }
@@ -253,7 +278,7 @@ export async function leaveRoom(roomCode, token) {
 
 export async function getAllNotifications(token) {
   const res = await fetch(`${API_URL}/notifications/all`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
   });
 
   if (!res.ok) {
@@ -266,7 +291,7 @@ export async function getAllNotifications(token) {
 export async function markNotificationAsRead(id, token) {
   const res = await fetch(`${API_URL}/notifications/${id}/read`, {
     method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
   });
 
   if (!res.ok) {
@@ -276,28 +301,35 @@ export async function markNotificationAsRead(id, token) {
   return true;
 }
 
-export async function deleteNotification(id, token) {
-  const res = await fetch(`${API_URL}/notifications/${id}`, {
+export async function deleteNotifications(token, id) {
+  let url = `${API_URL}/notifications`;
+
+  if (id) {
+    url = `${API_URL}/notifications?id=${id}`
+  }
+
+  const res = await fetch(url, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
   });
 
   if (!res.ok) {
-    throw new Error('Failed to delete notification');
+    throw new Error(id ? 'Failed to delete notification' : 'Failed to delete all notifications');
   }
 
   return res.json();
 }
 
-export async function deleteAllNotifications(token) {
-  const res = await fetch(`${API_URL}/notifications`, {
+export async function deleteHistory(token) {
+
+  const res = await fetch(`${API_URL}/history`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, "ngrok-skip-browser-warning": "true" },
   });
 
   if (!res.ok) {
-    throw new Error('Failed to delete all notifications');
+    throw new Error('Failed to delete history');
   }
-  
+
   return res.json();
 }

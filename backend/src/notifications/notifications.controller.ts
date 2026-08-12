@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Controller,
   Get,
@@ -6,10 +5,11 @@ import {
   Delete,
   Param,
   UseGuards,
-  Req,
+  Query,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { AuthGuard } from '../auth/auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('notifications')
 @UseGuards(AuthGuard)
@@ -17,30 +17,20 @@ export class NotificationsController {
   constructor(private notificationsService: NotificationsService) {}
 
   @Get('all')
-  async getAll(@Req() req: any) {
-    const userId = (req.user?.sub || req.user?.id) as number;
-
+  async index(@CurrentUser() userId: number) {
     return this.notificationsService.getAll(userId);
   }
 
   @Patch(':id/read')
-  async markAsRead(@Req() req: any, @Param('id') id: string) {
-    const userId = (req.user?.sub || req.user?.id) as number;
-
+  async update(@CurrentUser() userId: number, @Param('id') id: string) {
     return this.notificationsService.markAsRead(userId, Number(id));
   }
 
-  @Delete(':id')
-  async delete(@Req() req: any, @Param('id') id: string) {
-    const userId = (req.user?.sub || req.user?.id) as number;
-
-    return this.notificationsService.delete(userId, Number(id));
-  }
-
   @Delete()
-  async deleteAll(@Req() req: any) {
-    const userId = (req.user?.sub || req.user?.id) as number;
-
+  async destroy(@CurrentUser() userId: number, @Query('id') id?: string) {
+    if (id) {
+      return this.notificationsService.delete(userId, Number(id));
+    }
     return this.notificationsService.deleteAll(userId);
   }
 }

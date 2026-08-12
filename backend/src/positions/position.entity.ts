@@ -19,11 +19,8 @@ export class Position {
   @Column({ name: 'unit_id' })
   unitId: string;
 
-  @Column()
-  x: number;
-
-  @Column()
-  y: number;
+  @Column({ type: 'json', nullable: true })
+  cells: { x: number; y: number }[] | null;
 
   @Column({ name: 'user_id', nullable: true })
   userId: number;

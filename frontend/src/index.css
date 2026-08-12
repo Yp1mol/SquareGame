@@ -3,15 +3,10 @@
 @source "./**/*.{js,jsx,ts,tsx}";
 @custom-variant dark (&:where(.dark, .dark *));
 @layer base {
-  * {
-    @apply transition-colors duration-300;
-  }
   body {
-    @apply bg-white text-gray-900 transition-colors duration-300;
-    @apply dark:bg-gray-900 dark:text-white;
+    @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white transition-colors duration-600;
   }
-}
-@layer base {
+  
   html, body, #root {
     margin: 0;
     padding: 0;
@@ -20,5 +15,27 @@
   }
 }
 body {
-  @apply transition-colors duration-300;
+  @apply transition-colors duration-600;
+}
+
+@keyframes fadeOutSkeleton {
+  0% {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  90% {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  100% {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.skeleton-container-delayed {
+  animation-name: fadeOutSkeleton;
+  animation-duration: 1000ms;
+  animation-fill-mode: forwards;
+  animation-timing-function: linear;
 }

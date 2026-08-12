@@ -29,14 +29,9 @@ export class Positions1774028863756 implements MigrationInterface {
             isNullable: false,
           },
           {
-            name: 'x',
-            type: 'int',
-            isNullable: false,
-          },
-          {
-            name: 'y',
-            type: 'int',
-            isNullable: false,
+            name: 'сells',
+            type: 'json',
+            isNullable: true,
           },
           {
             name: 'user_id',

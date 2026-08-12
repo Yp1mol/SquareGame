@@ -6,6 +6,7 @@ import {
   JoinColumn,
   OneToMany,
   CreateDateColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Position } from '../positions/position.entity';
@@ -50,4 +51,7 @@ export class Room {
 
   @OneToMany(() => Position, (position) => position.room, { cascade: true })
   positions: Position[];
+
+  @DeleteDateColumn()
+  deletedAt?: Date;
 }

@@ -16,7 +16,13 @@ export class PositionsController {
   @Post('positions')
   async store(
     @Param('code') code: string,
-    @Body() body: { positions: { unitId: string; x: number; y: number }[] },
+    @Body()
+    body: {
+      positions: {
+        unitId: string;
+        cells: { x: number; y: number }[];
+      }[];
+    },
     @CurrentUser() userId: number,
   ) {
     return this.positionsService.savePositions(code, body.positions, userId);

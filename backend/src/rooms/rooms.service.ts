@@ -5,11 +5,13 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { LessThan, Not, Repository } from 'typeorm';
+import moment from 'moment';
 import { Room } from './room.entity';
 import { UsersService } from '../users/users.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RoomStatus } from './room-status.enum';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class RoomsService {
@@ -19,6 +21,24 @@ export class RoomsService {
     private readonly usersService: UsersService,
     private readonly notificationsService: NotificationsService,
   ) {}
+
+  @Cron('0 0 * * *')
+  async handleCron() {
+    const expiryDate = moment().subtract(7, 'days').toDate();
+    await this.roomsRepo
+      .createQueryBuilder()
+      .delete()
+      .from(Room)
+      .where('deletedAt <= :expiryDate', { expiryDate })
+      .execute();
+
+    await this.roomsRepo
+      .createQueryBuilder()
+      .softDelete()
+      .from(Room)
+      .where('createdAt <= :expiryDate', { expiryDate })
+      .execute();
+  }
 
   async create(code: string, ownerId: number, cost: number): Promise<Room> {
     const queryRunner = this.roomsRepo.manager.connection.createQueryRunner();
@@ -72,10 +92,6 @@ export class RoomsService {
   async findToJoin(userId: number): Promise<Room[]> {
     return this.roomsRepo.find({
       where: [
-        {
-          statusId: RoomStatus.WAITING,
-          ownerId: Not(userId),
-        },
         {
           statusId: RoomStatus.OWNER_READY,
           ownerId: Not(userId),
@@ -137,7 +153,6 @@ export class RoomsService {
         queryRunner.manager,
       );
       room.guestId = userId;
-      room.statusId = RoomStatus.PLAYING;
 
       const savedJoin = await repo.save(room);
       await queryRunner.commitTransaction();
@@ -158,17 +173,18 @@ export class RoomsService {
     });
   }
 
+  async deleteDate(code: string): Promise<Room | null> {
+    return this.roomsRepo.findOne({
+      where: { code },
+      relations: ['owner', 'guest'],
+    });
+  }
+
   async findMine(userId: number): Promise<Room[]> {
     return this.roomsRepo.find({
       where: [
-        { ownerId: userId, statusId: RoomStatus.WAITING },
-        { ownerId: userId, statusId: RoomStatus.OWNER_READY },
-        { ownerId: userId, statusId: RoomStatus.GUEST_READY },
-        { ownerId: userId, statusId: RoomStatus.PLAYING },
-        { guestId: userId, statusId: RoomStatus.WAITING },
-        { guestId: userId, statusId: RoomStatus.OWNER_READY },
-        { guestId: userId, statusId: RoomStatus.GUEST_READY },
-        { guestId: userId, statusId: RoomStatus.PLAYING },
+        { ownerId: userId, statusId: LessThan(RoomStatus.OWNER_WON) },
+        { guestId: userId, statusId: LessThan(RoomStatus.OWNER_WON) },
       ],
       relations: ['owner', 'guest'],
       select: {
@@ -220,7 +236,8 @@ export class RoomsService {
         'room_removed',
         `Room ${room.code} successfully removed`,
       );
-      const removed = await repo.remove(room);
+      room.deletedAt = new Date();
+      const removed = await repo.save(room);
       await queryRunner.commitTransaction();
       return removed;
     } catch (err) {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/authContext';
 import { markNotificationAsRead } from '../../../services/api';
-import { getAllNotifications, deleteNotification, deleteAllNotifications } from '../../../services/api';
+import { getAllNotifications, deleteNotifications} from '../../../services/api';
 
 export function useNotifications() {
     const { token } = useAuth();
@@ -28,13 +28,13 @@ export function useNotifications() {
     };
 
     const handleDelete = async (id) => {
-        await deleteNotification(id, token);
+        await deleteNotifications(token, id);
         await loadAll();
     };
 
     const handleDeleteAll = async () => {
         if (confirm('Are you sure you want to delete all notifications?')) {
-            await deleteAllNotifications(token);
+            await deleteNotifications(token);
             await loadAll();
         }
     };

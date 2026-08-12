@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { getBattleById } from "../../../services/api";
 import { useAuth } from "../../auth/authContext";
 
-export function useBattle(battleId) {
+export function useHistoryResult(battleId) {
   const [battle, setBattle] = useState(null);
   const { token } = useAuth();
 

@@ -13,6 +13,16 @@ import { HistoryService } from '../history/history.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RoomStatus } from '../rooms/room-status.enum';
 
+interface Cell {
+  x: number;
+  y: number;
+}
+
+type PositionInput = {
+  unitId: string;
+  cells: Cell[];
+};
+
 @Injectable()
 export class PositionsService {
   constructor(
@@ -55,7 +65,7 @@ export class PositionsService {
 
   async savePositions(
     code: string,
-    positions: { unitId: string; x: number; y: number }[] | undefined, // Сделали массив опциональным на всякий случай
+    positions: PositionInput[] | undefined,
     userId: number,
   ): Promise<Position[]> {
     const room = await this.roomRepository.findOne({ where: { code } });
@@ -77,20 +87,38 @@ export class PositionsService {
       throw new BadRequestException('You have already finished setup');
     }
 
+    const positionsArray = positions || [];
+
+    if (positionsArray.length !== 2) {
+      throw new BadRequestException('Two units required (attack and protect)');
+    }
+
+    const attack = positionsArray.find((p) => p.unitId === 'attack');
+    const protect = positionsArray.find((p) => p.unitId === 'protect');
+
+    if (!attack || !protect) {
+      throw new BadRequestException('Two units required (attack and protect)');
+    }
+    const attackCells = attack.cells;
+    const protectCells = protect.cells;
+
+    if (attackCells.length !== protectCells.length) {
+      throw new BadRequestException(
+        'Attack and protect must have the same number of cells',
+      );
+    }
+
     await this.positionRepository.delete({
       roomId: room.id,
       userId: userId,
     });
 
-    const positionsArray = positions || [];
-
     const newPositions = positionsArray.map((pos) =>
       this.positionRepository.create({
         roomId: room.id,
         unitId: pos.unitId,
-        x: pos.x,
-        y: pos.y,
         userId: userId,
+        cells: pos.cells || [],
       }),
     );
 
@@ -151,11 +179,15 @@ export class PositionsService {
     if (!result) {
       await this.usersService.addCredits(room.ownerId, room.cost);
       await this.usersService.addCredits(room.guestId, room.cost);
+      room.statusId = RoomStatus.DRAW;
+    } else if (result === room.ownerId) {
+      await this.usersService.addCredits(room.ownerId, room.cost * 2);
+      room.statusId = RoomStatus.OWNER_WON;
     } else {
-      await this.usersService.addCredits(result, room.cost * 2);
+      await this.usersService.addCredits(room.guestId, room.cost * 2);
+      room.statusId = RoomStatus.GUEST_WON;
     }
 
-    room.statusId = RoomStatus.PLAYING;
     await this.roomRepository.save(room);
 
     await this.historyService.create({
@@ -163,24 +195,37 @@ export class PositionsService {
       ownerId: room.ownerId,
       guestId: room.guestId,
       cost: room.cost,
+      statusId: room.statusId,
+      ownerPositions: ownerPositions,
+      guestPositions: guestPositions,
     });
+
+    let ownerMessage = 'Battle finished. It is a draw!';
+    let guestMessage = 'Battle finished. It is a draw!';
+
+    if (result === room.ownerId) {
+      ownerMessage = 'Battle finished. You won!';
+      guestMessage = 'Battle finished. You lost.';
+    } else if (result === room.guestId) {
+      ownerMessage = 'Battle finished. You lost.';
+      guestMessage = 'Battle finished. You won!';
+    }
 
     await this.notificationsService.create(
       room.ownerId,
       'battle_finished',
-      `Battle finished. ${result === room.ownerId ? 'You won!' : 'You lost.'}`,
+      ownerMessage,
     );
-
     await this.notificationsService.create(
       room.guestId,
       'battle_finished',
-      `Battle finished. ${result === room.guestId ? 'You won!' : 'You lost.'}`,
+      guestMessage,
     );
 
     return {
       message: 'Battle finished!',
       winnerId: result,
-      winnerCredits: result ? room.cost * 2 : 0,
+      winnerCredits: result ? room.cost * 2 : room.cost,
     };
   }
 
@@ -199,30 +244,32 @@ export class PositionsService {
       return null;
     }
 
-    const SIZE = 160;
+    const ownerAttackCells = ownerAttack.cells || [];
+    const guestProtectCells = guestProtect.cells || [];
+    const guestAttackCells = guestAttack.cells || [];
+    const ownerProtectCells = ownerProtect.cells || [];
 
-    const ownerOverlap = this.calculateOverlap(
-      ownerAttack.x,
-      ownerAttack.y,
-      SIZE,
-      guestProtect.x,
-      guestProtect.y,
-      SIZE,
+    if (
+      ownerAttackCells.length === 0 ||
+      guestProtectCells.length === 0 ||
+      guestAttackCells.length === 0 ||
+      ownerProtectCells.length === 0
+    ) {
+      return null;
+    }
+
+    const ownerOverlap = this.calculateGridOverlap(
+      ownerAttackCells,
+      guestProtectCells,
     );
-
-    const guestOverlap = this.calculateOverlap(
-      guestAttack.x,
-      guestAttack.y,
-      SIZE,
-      ownerProtect.x,
-      ownerProtect.y,
-      SIZE,
+    const guestOverlap = this.calculateGridOverlap(
+      guestAttackCells,
+      ownerProtectCells,
     );
 
     if (ownerOverlap > guestOverlap) {
       return ownerId;
     }
-
     if (guestOverlap > ownerOverlap) {
       return guestId;
     }
@@ -230,22 +277,16 @@ export class PositionsService {
     return null;
   }
 
-  private calculateOverlap(
-    x1: number,
-    y1: number,
-    size1: number,
-    x2: number,
-    y2: number,
-    size2: number,
-  ): number {
-    const left = Math.max(x1, x2);
-    const right = Math.min(x1 + size1, x2 + size2);
-    const top = Math.max(y1, y2);
-    const bottom = Math.min(y1 + size1, y2 + size2);
+  private calculateGridOverlap(arrayA: Cell[], arrayB: Cell[]): number {
+    const setA = new Set(arrayA.map((cell) => `${cell.x},${cell.y}`));
 
-    if (left < right && top < bottom) {
-      return (right - left) * (bottom - top);
+    let overlapCells = 0;
+    for (const cell of arrayB) {
+      if (setA.has(`${cell.x},${cell.y}`)) {
+        overlapCells++;
+      }
     }
-    return 0;
+
+    return overlapCells;
   }
 }

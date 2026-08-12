@@ -1,41 +1,47 @@
 import React from "react";
-import { useParams } from "react-router-dom";
-import { GameField } from "../../components/game/GameField";
-import SquareDrag from "../../components/game/SquareDrag";
-import { useBattle } from "./hooks/useHistoryResult";
-import { Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
+import ComponentDrawer from "../../components/game/ComponentDrawer";
+import { useHistoryResult } from "./hooks/useHistoryResult";
 
 export default function HistoryResultView() {
   const { id } = useParams();
-  const { battle, fieldDimensions } = useBattle(id);
+  const { battle } = useHistoryResult(id);
 
   if (!battle) {
-    return <div className="text-center p-8">Battle not found</div>;
+    return <div className="text-center p-8 dark:text-white">Battle not found or loading...</div>;
   }
 
-  const ownerAttack = battle.ownerPositions?.find(p => p.unitId === 'attack');
-  const ownerProtect = battle.ownerPositions?.find(p => p.unitId === 'protect');
-  const guestAttack = battle.guestPositions?.find(p => p.unitId === 'attack');
-  const guestProtect = battle.guestPositions?.find(p => p.unitId === 'protect');
+  const isAttack = (unitId) => unitId === 'attack' || unitId === 'attacker' || unitId === '1';
+  const isProtect = (unitId) => unitId === 'protect' || unitId === 'defender' || unitId === 'defense' || unitId === '2';
 
-  const ownerFieldUnits = [
-    { id: "owner-protect", title: "OWNER'S PROTECT", color: "bg-blue-600", x: ownerProtect?.x || 0, y: ownerProtect?.y || 0, owner: "owner" },
-    { id: "guest-attack", title: "GUEST'S ATTACK", color: "bg-red-600", x: guestAttack?.x || 0, y: guestAttack?.y || 0, owner: "guest" }
-  ];
+  const ownerAttack = battle.ownerPositions?.find(p => isAttack(p.unitId))?.cells || [];
+  const ownerProtect = battle.ownerPositions?.find(p => isProtect(p.unitId))?.cells || [];
+  const guestAttack = battle.guestPositions?.find(p => isAttack(p.unitId))?.cells || [];
+  const guestProtect = battle.guestPositions?.find(p => isProtect(p.unitId))?.cells || [];
 
-  const guestFieldUnits = [
-    { id: "guest-protect", title: "GUEST'S PROTECT", color: "bg-blue-600", x: guestProtect?.x || 0, y: guestProtect?.y || 0, owner: "guest" },
-    { id: "owner-attack", title: "OWNER'S ATTACK", color: "bg-red-600", x: ownerAttack?.x || 0, y: ownerAttack?.y || 0, owner: "owner" }
-  ];
+  const getOverlap = (cellsA, cellsB) => {
+    const setA = new Set(cellsA.map(c => `${c.x},${c.y}`));
+    return cellsB.filter(c => setA.has(`${c.x},${c.y}`));
+  };
 
-  const winnerName = battle.winner?.username || "Draw";
+  const ownerFieldOverlap = getOverlap(ownerProtect, guestAttack);
+  const guestFieldOverlap = getOverlap(guestProtect, ownerAttack);
+
+  const getWinnerText = () => {
+    if (battle.statusId === 10) return battle.owner?.username || "Owner";
+    if (battle.statusId === 11) return battle.guest?.username || "Guest";
+    return "Draw";
+  };
+
+  const winnerName = getWinnerText();
+  const isDraw = battle.statusId === 12;
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center p-4 md:p-6">
       <div className="w-full max-w-5xl mb-4">
         <Link
           to="/profile"
-          className="px-3 py-1.5 text-sm md:px-4 md:py-2 bg-gray-200 dark:bg-gray-700 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+          className="px-3 py-1.5 text-sm md:px-4 md:py-2 bg-gray-200 dark:bg-gray-700 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition"
         >
           Back
         </Link>
@@ -43,57 +49,35 @@ export default function HistoryResultView() {
 
       <h1 className="text-xl md:text-2xl font-bold mb-2 dark:text-white">Battle Result</h1>
       <div className="text-base md:text-lg mb-6 dark:text-gray-300">
-        Winner: <span className="font-bold text-green-600">{winnerName}</span>
+        Result:{" "}
+        <span className={`font-bold ${isDraw ? "text-amber-500" : "text-green-600"}`}>
+          {isDraw ? "Draw" : `Winner: ${winnerName}`}
+        </span>
       </div>
 
-      <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 relative">
-        <div className="relative">
-          <GameField
-            id="owner-field"
-            title="OWNER'S FIELD"
-            color="bg-blue-400 dark:bg-blue-900"
-          >
-            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-              <h1 className="text-4xl md:text-8xl font-black text-blue-800 dark:text-blue-200">OWNER</h1>
-            </div>
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+        
+        <ComponentDrawer
+          title="OWNER'S FIELD"
+          color="bg-blue-500"
+          secondaryColor="bg-red-500"
+          cells={ownerProtect}
+          secondaryCells={guestAttack}
+          overlapCells={ownerFieldOverlap}
+          disabled={true}
+        />
 
-            {ownerFieldUnits.map((unit) => (
-              <SquareDrag
-                key={unit.id}
-                id={unit.id}
-                title={unit.title}
-                color={unit.color}
-                position={{ x: unit.x, y: unit.y }}
-                fieldDimensions={fieldDimensions}
-                disabled={true}
-              />
-            ))}
-          </GameField>
-        </div>
-
-        <div className="relative">
-          <GameField
-            id="guest-field"
-            title="GUEST'S FIELD"
-            color="bg-red-400 dark:bg-red-900"
-          >
-            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
-              <h1 className="text-4xl md:text-8xl font-black text-red-800 dark:text-red-200">GUEST</h1>
-            </div>
-
-            {guestFieldUnits.map((unit) => (
-              <SquareDrag
-                key={unit.id}
-                id={unit.id}
-                title={unit.title}
-                color={unit.color}
-                position={{ x: unit.x, y: unit.y }}
-                fieldDimensions={fieldDimensions}
-                disabled={true}
-              />
-            ))}
-          </GameField>
-        </div>
+        {/* ПОЛЕ ГОСТЯ */}
+        <ComponentDrawer
+          title="GUEST'S FIELD"
+          color="bg-blue-500"
+          secondaryColor="bg-red-500"
+          cells={guestProtect}
+          secondaryCells={ownerAttack}
+          overlapCells={guestFieldOverlap}
+          disabled={true}
+        />
+        
       </div>
 
       <div className="text-center text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-4">

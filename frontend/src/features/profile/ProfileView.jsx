@@ -39,9 +39,9 @@ export function ProfileView() {
 
                         <button
                             onClick={handleUpdateUsername}
-                            className="text-sm text-blue-500 hover:text-blue-600 font-medium"
+                            className="cursor-pointer text-sm text-blue-500 hover:text-blue-600 font-medium"
                         >
-                            Save username →
+                            Save username
                         </button>
 
                         <div className="mt-8 text-center">
@@ -90,7 +90,7 @@ export function ProfileView() {
                 <div className="flex justify-center mt-12">
                     <button
                         onClick={handleLogout}
-                        className="bg-gray-200 dark:bg-red-700 hover:bg-red-300 dark:hover:bg-red-600 text-gray-700 dark:text-gray-200 px-8 py-3 rounded-full font-bold transition"
+                        className="cursor-pointer bg-gray-200 dark:bg-red-700 hover:bg-red-300 dark:hover:bg-red-600 text-gray-700 dark:text-gray-200 px-8 py-3 rounded-full font-bold transition"
                     >
                         Logout
                     </button>

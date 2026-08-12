@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getUserHistory } from "../../../services/api";
+import { getUserHistory, deleteHistory} from "../../../services/api";
 import { useAuth } from "../../auth/authContext";
 
 export function useHistoryList() {
@@ -20,5 +20,14 @@ export function useHistoryList() {
         loadHistory();
     }, [token]);
 
-    return { history };
+    const handleDeleteHistory = async () => {
+        try {
+          await deleteHistory(token);
+          setHistory([]);
+        } catch (err) {
+          alert(err.message);
+        }
+      };
+
+    return { history, handleDeleteHistory };
 }

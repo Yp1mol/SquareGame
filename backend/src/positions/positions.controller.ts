@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { PositionsService } from './positions.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { UnitType } from './unitType.enum';
 
 @Controller('rooms/:code')
 @UseGuards(AuthGuard)
@@ -19,7 +20,7 @@ export class PositionsController {
     @Body()
     body: {
       positions: {
-        unitId: string;
+        unitId: UnitType;
         cells: { x: number; y: number }[];
       }[];
     },

@@ -10,6 +10,16 @@ import { Room } from '../rooms/room.entity';
 import { User } from '../users/user.entity';
 import { RoomStatus } from '../rooms/room-status.enum';
 
+export interface CellCoordinates {
+  x: number;
+  y: number;
+}
+
+export interface UnitPosition {
+  unitId: string;
+  cells: CellCoordinates[];
+}
+
 @Entity('history')
 export class History {
   @PrimaryGeneratedColumn()
@@ -43,10 +53,10 @@ export class History {
   cost!: number;
 
   @Column({ name: 'owner_positions', type: 'jsonb', nullable: true })
-  ownerPositions!: any;
+  ownerPositions!: UnitPosition[];
 
   @Column({ name: 'guest_positions', type: 'jsonb', nullable: true })
-  guestPositions!: any;
+  guestPositions!: UnitPosition[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

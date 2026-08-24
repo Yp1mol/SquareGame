@@ -47,8 +47,37 @@ export default function GameView() {
     };
 
     return (
-
+        
         <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col items-center p-4 md:p-6">
+            <dialog
+                id="finishDialog"
+                className="m-auto inset-0 fixed rounded-2xl p-6 max-w-sm w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-white backdrop:bg-black/50 shadow-2xl border border-gray-200 dark:border-gray-700"
+            >
+                <p className="font-bold text-lg mb-2 text-center">Finish Setup?</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 text-center">
+                    Are you sure you want to finish setup?
+                </p>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        onClick={() => document.getElementById("finishDialog")?.close()}
+                        className="flex-1 py-2 rounded-xl bg-gray-200 dark:bg-gray-700 font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            document.getElementById("finishDialog")?.close();
+                            finishSetup();
+                        }}
+                        className="flex-1 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold transition"
+                    >
+                        Confirm
+                    </button>
+                </div>
+            </dialog>
+
             {showMismatchModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-sm w-full shadow-xl text-center">
@@ -124,7 +153,7 @@ export default function GameView() {
 
                 {showFinishButton() && !cellsMismatch && (
                     <button
-                        onClick={finishSetup}
+                        onClick={() => document.getElementById("finishDialog")?.showModal()}
                         className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-xl md:rounded-[2rem] transition text-sm md:text-base"
                     >
                         FINISH SETUP

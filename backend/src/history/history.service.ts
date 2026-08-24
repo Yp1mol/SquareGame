@@ -38,6 +38,7 @@ export class HistoryService {
 
     return history;
   }
+
   async deleteAll(userId: number) {
     return this.historyRepo.delete([{ ownerId: userId }, { guestId: userId }]);
   }

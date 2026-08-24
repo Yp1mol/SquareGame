@@ -16,7 +16,7 @@ export const dataSourceOptions: DataSourceOptions = {
   database: process.env.DATABASE_URL ? undefined : 'game_square',
   entities: [User, Room, Position, History, Notification],
   migrations: [path.join(__dirname, 'migrations', '*.ts')],
-  synchronize: true,
+  synchronize: false,
   ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 };
 

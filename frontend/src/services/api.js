@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_URL = 'https://band-gold-gravity-ciao.trycloudflare.com';
+export const API_URL = 'http://localhost:3001';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -207,18 +207,18 @@ export async function deleteRoom(roomCode, token) {
   return res.json();
 }
 
-export async function finishRoomSetup(roomCode, token) {
+export async function finishRoomSetup(roomCode, token, positions) {
   const res = await fetch(`${API_URL}/rooms/${roomCode}/setups`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
       "ngrok-skip-browser-warning": "true",
     },
+    body: JSON.stringify({ positions }),
   });
 
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || "Failed to finish setup");
+    throw new Error("Failed to finish setup");
   }
 
   return res.json();

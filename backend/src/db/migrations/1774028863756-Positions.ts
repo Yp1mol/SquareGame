@@ -29,14 +29,14 @@ export class Positions1774028863756 implements MigrationInterface {
             isNullable: false,
           },
           {
-            name: 'сells',
+            name: 'cells',
             type: 'json',
             isNullable: true,
           },
           {
             name: 'user_id',
             type: 'int',
-            isNullable: false,
+            isNullable: true,
           },
         ],
       }),

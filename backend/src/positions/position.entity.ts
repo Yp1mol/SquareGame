@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { Room } from '../rooms/room.entity';
 import { User } from '../users/user.entity';
+import { UnitType } from './unitType.enum';
 
 @Entity('positions')
 export class Position {
@@ -16,8 +17,12 @@ export class Position {
   @Column({ name: 'room_id' })
   roomId: number;
 
-  @Column({ name: 'unit_id' })
-  unitId: string;
+  @Column({
+    type: 'enum',
+    enum: UnitType,
+    name: 'unit_id',
+  })
+  unitId: UnitType;
 
   @Column({ type: 'json', nullable: true })
   cells: { x: number; y: number }[] | null;

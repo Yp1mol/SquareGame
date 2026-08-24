@@ -12,6 +12,7 @@ import { UsersService } from '../users/users.service';
 import { HistoryService } from '../history/history.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { RoomStatus } from '../rooms/room-status.enum';
+import { UnitType } from './unitType.enum';
 
 interface Cell {
   x: number;
@@ -19,7 +20,7 @@ interface Cell {
 }
 
 type PositionInput = {
-  unitId: string;
+  unitId: UnitType;
   cells: Cell[];
 };
 
@@ -47,19 +48,13 @@ export class PositionsService {
     }
 
     return this.positionRepository.find({
-      where: {
-        roomId: room.id,
-        userId: userId,
-      },
+      where: { roomId: room.id, userId },
     });
   }
 
   async getByRoomAndUser(roomId: number, userId: number): Promise<Position[]> {
     return this.positionRepository.find({
-      where: {
-        roomId: roomId,
-        userId: userId,
-      },
+      where: { roomId, userId },
     });
   }
 
@@ -78,12 +73,10 @@ export class PositionsService {
       throw new ForbiddenException('You are not a participant of this room');
     }
 
-    const isOwnerReady =
-      room.ownerId === userId && room.statusId === RoomStatus.OWNER_READY;
-    const isGuestReady =
-      room.guestId === userId && room.statusId === RoomStatus.GUEST_READY;
-
-    if (isOwnerReady || isGuestReady) {
+    if (
+      (room.ownerId === userId && room.statusId === RoomStatus.OWNER_READY) ||
+      (room.guestId === userId && room.statusId === RoomStatus.GUEST_READY)
+    ) {
       throw new BadRequestException('You have already finished setup');
     }
 
@@ -93,31 +86,20 @@ export class PositionsService {
       throw new BadRequestException('Two units required (attack and protect)');
     }
 
-    const attack = positionsArray.find((p) => p.unitId === 'attack');
-    const protect = positionsArray.find((p) => p.unitId === 'protect');
+    const attack = positionsArray.find((p) => p.unitId === UnitType.ATTACK);
+    const protect = positionsArray.find((p) => p.unitId === UnitType.PROTECT);
 
-    if (!attack || !protect) {
-      throw new BadRequestException('Two units required (attack and protect)');
-    }
-    const attackCells = attack.cells;
-    const protectCells = protect.cells;
-
-    if (attackCells.length !== protectCells.length) {
-      throw new BadRequestException(
-        'Attack and protect must have the same number of cells',
-      );
+    if (!attack || !protect || attack.cells.length !== protect.cells.length) {
+      throw new BadRequestException('Invalid units configuration');
     }
 
-    await this.positionRepository.delete({
-      roomId: room.id,
-      userId: userId,
-    });
+    await this.positionRepository.delete({ roomId: room.id, userId });
 
     const newPositions = positionsArray.map((pos) =>
       this.positionRepository.create({
         roomId: room.id,
         unitId: pos.unitId,
-        userId: userId,
+        userId,
         cells: pos.cells || [],
       }),
     );
@@ -149,43 +131,37 @@ export class PositionsService {
       throw new BadRequestException('Save your locations at first please');
     }
 
-    if (isOwner) {
-      room.statusId = RoomStatus.OWNER_READY;
-      await this.roomRepository.save(room);
+    room.statusId = isOwner ? RoomStatus.OWNER_READY : RoomStatus.GUEST_READY;
+    await this.roomRepository.save(room);
 
-      return {
-        message: 'Setup finished. Room is now visible to other players.',
-      };
-    }
-
-    if (isGuest) {
-      room.statusId = RoomStatus.GUEST_READY;
-      await this.roomRepository.save(room);
-
+    if (!isOwner) {
       return this.finishRoom(room);
     }
+
+    return { status: room.statusId };
   }
 
   async finishRoom(room: Room) {
     const ownerPositions = await this.getByRoomAndUser(room.id, room.ownerId);
     const guestPositions = await this.getByRoomAndUser(room.id, room.guestId);
-    const result = this.calculateResult(
+
+    const winnerId = this.calculateResult(
       ownerPositions,
       guestPositions,
       room.ownerId,
       room.guestId,
     );
 
-    if (!result) {
+    if (winnerId === room.ownerId) {
+      await this.usersService.addCredits(room.ownerId, room.cost * 2);
+      room.statusId = RoomStatus.OWNER_WON;
+    } else if (winnerId === room.guestId) {
+      await this.usersService.addCredits(room.guestId, room.cost * 2);
+      room.statusId = RoomStatus.GUEST_WON;
+    } else {
       await this.usersService.addCredits(room.ownerId, room.cost);
       await this.usersService.addCredits(room.guestId, room.cost);
       room.statusId = RoomStatus.DRAW;
-    } else if (result === room.ownerId) {
-      await this.usersService.addCredits(room.ownerId, room.cost * 2);
-      room.statusId = RoomStatus.OWNER_WON;
-    } else {
-      await this.usersService.addCredits(room.guestId, room.cost * 2);
-      room.statusId = RoomStatus.GUEST_WON;
     }
 
     await this.roomRepository.save(room);
@@ -196,36 +172,25 @@ export class PositionsService {
       guestId: room.guestId,
       cost: room.cost,
       statusId: room.statusId,
-      ownerPositions: ownerPositions,
-      guestPositions: guestPositions,
+      ownerPositions,
+      guestPositions,
     });
-
-    let ownerMessage = 'Battle finished. It is a draw!';
-    let guestMessage = 'Battle finished. It is a draw!';
-
-    if (result === room.ownerId) {
-      ownerMessage = 'Battle finished. You won!';
-      guestMessage = 'Battle finished. You lost.';
-    } else if (result === room.guestId) {
-      ownerMessage = 'Battle finished. You lost.';
-      guestMessage = 'Battle finished. You won!';
-    }
 
     await this.notificationsService.create(
       room.ownerId,
       'battle_finished',
-      ownerMessage,
+      room.statusId.toString(),
     );
     await this.notificationsService.create(
       room.guestId,
       'battle_finished',
-      guestMessage,
+      room.statusId.toString(),
     );
 
     return {
-      message: 'Battle finished!',
-      winnerId: result,
-      winnerCredits: result ? room.cost * 2 : room.cost,
+      status: room.statusId,
+      winnerId,
+      winnerCredits: winnerId ? room.cost * 2 : room.cost,
     };
   }
 
@@ -235,44 +200,34 @@ export class PositionsService {
     ownerId: number,
     guestId: number,
   ): number | null {
-    const ownerAttack = ownerPositions.find((p) => p.unitId === 'attack');
-    const guestAttack = guestPositions.find((p) => p.unitId === 'attack');
-    const ownerProtect = ownerPositions.find((p) => p.unitId === 'protect');
-    const guestProtect = guestPositions.find((p) => p.unitId === 'protect');
+    const ownerAttack = ownerPositions.find(
+      (p) => p.unitId === UnitType.ATTACK,
+    );
+    const guestAttack = guestPositions.find(
+      (p) => p.unitId === UnitType.ATTACK,
+    );
+    const ownerProtect = ownerPositions.find(
+      (p) => p.unitId === UnitType.PROTECT,
+    );
+    const guestProtect = guestPositions.find(
+      (p) => p.unitId === UnitType.PROTECT,
+    );
 
     if (!ownerAttack || !guestAttack || !ownerProtect || !guestProtect) {
       return null;
     }
 
-    const ownerAttackCells = ownerAttack.cells || [];
-    const guestProtectCells = guestProtect.cells || [];
-    const guestAttackCells = guestAttack.cells || [];
-    const ownerProtectCells = ownerProtect.cells || [];
-
-    if (
-      ownerAttackCells.length === 0 ||
-      guestProtectCells.length === 0 ||
-      guestAttackCells.length === 0 ||
-      ownerProtectCells.length === 0
-    ) {
-      return null;
-    }
-
     const ownerOverlap = this.calculateGridOverlap(
-      ownerAttackCells,
-      guestProtectCells,
+      ownerAttack.cells,
+      guestProtect.cells,
     );
     const guestOverlap = this.calculateGridOverlap(
-      guestAttackCells,
-      ownerProtectCells,
+      guestAttack.cells,
+      ownerProtect.cells,
     );
 
-    if (ownerOverlap > guestOverlap) {
-      return ownerId;
-    }
-    if (guestOverlap > ownerOverlap) {
-      return guestId;
-    }
+    if (ownerOverlap > guestOverlap) return ownerId;
+    if (guestOverlap > ownerOverlap) return guestId;
 
     return null;
   }

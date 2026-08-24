@@ -120,11 +120,11 @@ export function useGame() {
             return { ok: false, reason: "server", error: err.message || "Failed to save positions" };
         }
     };
-
+    
     const handleFinishSetup = async () => {
         try {
             const result = await finishRoomSetup(code, token);
-            alert(result.message);
+            alert("Successfully finished room");
 
             if (isOwner) {
                 setOwnerReady(true);
